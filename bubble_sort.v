@@ -7,7 +7,10 @@ module bubble_sort (
     input load_num,
     input sort_trigger,
     input [3:0] random_num,
-    output reg [3:0] sorted_nums [0:3],
+    output reg [3:0] sorted_nums_0,
+    output reg [3:0] sorted_nums_1,
+    output reg [3:0] sorted_nums_2,
+    output reg [3:0] sorted_nums_3,
     output reg sorting_done
 );
 
@@ -40,9 +43,11 @@ always @(posedge clk) begin
             end
         end
         
-        for (i = 0; i < 4; i = i + 1) begin
-            sorted_nums[i] <= nums[i];
-        end
+        // Assign sorted numbers to individual outputs
+        sorted_nums_0 <= nums[0];
+        sorted_nums_1 <= nums[1];
+        sorted_nums_2 <= nums[2];
+        sorted_nums_3 <= nums[3];
     end
 end
 

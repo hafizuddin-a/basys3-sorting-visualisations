@@ -1,11 +1,17 @@
-`timescale 1ns / 1ps
-
-// seg_display module
+// seg_display module (updated)
 module seg_display (
     input clk,
-    input sorting_done,
+    input sorting_done_bubble,
+    input sorting_done_selection,
     input [3:0] unsorted_nums,
-    input [3:0] sorted_nums [0:3],
+    input [3:0] sorted_nums_bubble_0,
+    input [3:0] sorted_nums_bubble_1,
+    input [3:0] sorted_nums_bubble_2,
+    input [3:0] sorted_nums_bubble_3,
+    input [3:0] sorted_nums_selection_0,
+    input [3:0] sorted_nums_selection_1,
+    input [3:0] sorted_nums_selection_2,
+    input [3:0] sorted_nums_selection_3,
     output reg [6:0] seg,
     output reg [3:0] an
 );
@@ -21,29 +27,37 @@ always @(*) begin
     case (display_count[16:15])
         2'b00: begin
             an <= 4'b0111;
-            if (sorting_done)
-                display_num <= sorted_nums[3];
+            if (sorting_done_bubble)
+                display_num <= sorted_nums_bubble_3;
+            else if (sorting_done_selection)
+                display_num <= sorted_nums_selection_3;
             else
                 display_num <= unsorted_nums;
         end
         2'b01: begin
             an <= 4'b1011;
-            if (sorting_done)
-                display_num <= sorted_nums[2];
+            if (sorting_done_bubble)
+                display_num <= sorted_nums_bubble_2;
+            else if (sorting_done_selection)
+                display_num <= sorted_nums_selection_2;
             else
                 display_num <= 4'b0000;
         end
         2'b10: begin
             an <= 4'b1101;
-            if (sorting_done)
-                display_num <= sorted_nums[1];
+            if (sorting_done_bubble)
+                display_num <= sorted_nums_bubble_1;
+            else if (sorting_done_selection)
+                display_num <= sorted_nums_selection_1;
             else
                 display_num <= 4'b0000;
         end
         2'b11: begin
             an <= 4'b1110;
-            if (sorting_done)
-                display_num <= sorted_nums[0];
+            if (sorting_done_bubble)
+                display_num <= sorted_nums_bubble_0;
+            else if (sorting_done_selection)
+                display_num <= sorted_nums_selection_0;
             else
                 display_num <= 4'b0000;
         end
