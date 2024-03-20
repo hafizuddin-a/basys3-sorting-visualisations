@@ -1,7 +1,7 @@
-# Sorting Algorithm Visualizations on Basys3 Board
+# Sorting Algorithm Visualisations on Basys3 Board
 
 ## Overview
-This project aims to demonstrate various sorting algorithms through visualizations on the Basys3 FPGA board using Verilog, a hardware description language known for its complexity. The goal is to provide a clear and engaging way to understand how different sorting algorithms work by visualizing their operations in real-time on the FPGA board. The visualizations are displayed on a Pmod OLED connected to the Basys3 board.
+This project aims to demonstrate various sorting algorithms through visualisations on the Basys3 FPGA board using Verilog, a hardware description language known for its complexity. The goal is to provide a clear and engaging way to understand how different sorting algorithms work by visualizing their operations in real-time on the FPGA board. The visualisations are displayed on a Pmod OLED connected to the Basys3 board.
 
 ## Prerequisites
 - **Hardware**: 
@@ -21,7 +21,7 @@ This project aims to demonstrate various sorting algorithms through visualizatio
 3. Generate the bitstream and program the Basys3 board with the generated bitstream file.
 
 ## Usage
-Once the Basys3 board is programmed, the sorting visualizations will start automatically on the Pmod OLED. The board's switches and buttons can be used to control the visualization, such as selecting different sorting algorithms, starting or pausing the sorting process, and resetting the visualization.
+Once the Basys3 board is programmed, the sorting visualisations will start automatically on the Pmod OLED. The board's switches and buttons can be used to control the visualisation, such as selecting different sorting algorithms, starting or pausing the sorting process, and resetting the visualisation.
 
 ### Visualizing Sorting on the Pmod OLED
 The Pmod OLED will display a graphical representation of the array being sorted. Each element in the array is represented by a vertical bar, with the height of the bar corresponding to the value of the element. As the sorting algorithm progresses, you'll see the bars being sorted in real-time, providing a visual understanding of how the algorithm works.
