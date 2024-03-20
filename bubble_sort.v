@@ -1,5 +1,6 @@
 `timescale 1ns / 1ps
 
+// 4-bit Linear Feedback Shift Register - genreates random number
 module lfsr (
     input clk,
     input rst,
