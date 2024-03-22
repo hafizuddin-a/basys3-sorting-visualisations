@@ -88,3 +88,6 @@ my_project/my_project.runs/synth_1/top_module_utilization_synth.pb
 my_project/my_project.runs/synth_1/top_module_utilization_synth.rpt
 my_project/my_project.runs/synth_1/vivado.pb
 my_project/my_project.runs/synth_1/.Xil/top_module_propImpl.xdc
+my_project/
+*.jou
+*.log
