@@ -20,13 +20,13 @@ launch_runs impl_1 -to_step write_bitstream -jobs 8
 wait_on_run impl_1
 
 # Program the board. Uncomment below to program
-#open_hw_manager
-#connect_hw_server
-#open_hw_target
-#current_hw_device [lindex [get_hw_devices] 0]
-#refresh_hw_device -update_hw_probes false [lindex [get_hw_devices] 0]
-#set_property PROGRAM.FILE {./my_project.runs/impl_1/top_module.bit} [lindex [get_hw_devices] 0]
-#program_hw_devices [lindex [get_hw_devices] 0]
+open_hw
+connect_hw_server
+open_hw_target
+current_hw_device [lindex [get_hw_devices] 0]
+refresh_hw_device -update_hw_probes false [lindex [get_hw_devices] 0]
+set_property PROGRAM.FILE {./my_project/my_project.runs/impl_1/top_module.bit} [lindex [get_hw_devices] 0]
+program_hw_device [lindex [get_hw_devices] 0]
 
 # Close the project
 close_project
