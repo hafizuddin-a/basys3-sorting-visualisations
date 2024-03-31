@@ -60,7 +60,7 @@ always @(posedge clk) begin
         for (i = 0; i < 5; i = i + 1) begin
             bar_heights[i] <= (counter * 37 + i * 17) % 64; // Generate more random heights
         end
-        sorting <= 0;
+        sorting <= 0; // Ensure sorting is not started yet
         delay_counter <= 0;
         j <= 0;
         random_bars_generated <= 1; // Set the flag
@@ -92,24 +92,40 @@ always @(posedge clk) begin
 end
 
 
+// Additional color definitions
+localparam YELLOW_COLOR = 16'hFFE0; // Yellow color
+localparam RED_COLOR = 16'hF800; // Red color
+integer bar_index;
+
+// Add more logic in the display block to change colors
 always @(*) begin
-    // Set the color of the current pixel based on its horizontal position
-    if ((pixel_index % 96) < (BAR_WIDTH * 10 + BAR_SPACING * 9)) begin
-        // Inside the bar area
-        if (((pixel_index % 96) / (BAR_WIDTH + BAR_SPACING)) % 2 == 0) begin
-            // Calculate the bar index
-            if ((63 - (pixel_index / 96)) < bar_heights[((pixel_index % 96) / (BAR_WIDTH + BAR_SPACING)) / 2]) begin
+    bar_index = ((pixel_index % 96) / (BAR_WIDTH + BAR_SPACING)) / 2; // Calculate the bar index
+
+    // Default color is black (background)
+    oled_data = BACKGROUND_COLOR;
+    
+    if ((pixel_index % 96) < (BAR_WIDTH * 10 + BAR_SPACING * 9)) begin // Inside the bar area
+        if (((pixel_index % 96) / (BAR_WIDTH + BAR_SPACING)) % 2 == 0) begin // Inside a bar
+            if ((63 - (pixel_index / 96)) < bar_heights[bar_index]) begin
+                // Default bar color
                 oled_data = BAR_COLOR;
-            end else begin
-                oled_data = BACKGROUND_COLOR;
+    
+                // If sorting is in progress, color bars accordingly
+                if (sorting) begin
+                    // If the bar is currently being compared, color it yellow
+                    if (bar_index == j || bar_index == j + 1) begin
+                        oled_data = YELLOW_COLOR;
+                    end
+    
+                    // If the bar is in the sorted position, color it red
+                    if (bar_index >= 5 - i) begin
+                        oled_data = RED_COLOR;
+                    end
+                end
             end
-        end else begin
-            oled_data = BACKGROUND_COLOR;
         end
-    end else begin
-        // Outside the bar area
-        oled_data = BACKGROUND_COLOR;
     end
 end
+
 
 endmodule
