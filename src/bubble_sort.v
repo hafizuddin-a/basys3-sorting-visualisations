@@ -64,12 +64,12 @@ always @(*) begin
     
     // Perform bubble sort by passing through the entire list 10 times
     if (sw0 && sw1) begin
-        for (j = 0; j < 10; j = j + 1) begin
-            for (i = 0; i < 4; i = i + 1) begin
-                if (bar_heights_sorted[i] > bar_heights_sorted[i + 1]) begin
+        for (i = 0; i < 4; i = i + 1) begin
+            for (j = 0; j < 4 - i; j = j + 1) begin
+                if (bar_heights_sorted[j] > bar_heights_sorted[j + 1]) begin
                     // Swap adjacent bars if they are in the wrong order
-                    bar_heights_sorted[i] <= bar_heights_sorted[i + 1];
-                    bar_heights_sorted[i + 1] <= bar_heights_sorted[i];
+                    bar_heights_sorted[j] <= bar_heights_sorted[j + 1];
+                    bar_heights_sorted[j + 1] <= bar_heights_sorted[j];
                 end
             end
         end
