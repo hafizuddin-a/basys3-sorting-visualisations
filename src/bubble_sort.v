@@ -3,53 +3,101 @@
 // bubble_sort module
 module bubble_sort (
     input clk,
-    input rst,
-    input load_num,
-    input sort_trigger,
-    input [3:0] random_num,
-    output reg [3:0] sorted_nums_0,
-    output reg [3:0] sorted_nums_1,
-    output reg [3:0] sorted_nums_2,
-    output reg [3:0] sorted_nums_3,
-    output reg sorting_done
+    input sw0,
+    input sw1,
+    output [7:0] Jx
 );
 
-reg [3:0] nums [0:3];
-reg [1:0] count;
+wire frame_begin, sending_pixels, sample_pixel;
+wire [12:0] pixel_index;
+reg [15:0] oled_data;
+wire clk_6p25m;
+
+clk6p25m clock_display(clk, clk_6p25m);
+
+Oled_Display unit_oled (
+    .clk(clk_6p25m), 
+    .reset(0), 
+    .frame_begin(frame_begin), 
+    .sending_pixels(sending_pixels),
+    .sample_pixel(sample_pixel), 
+    .pixel_index(pixel_index), 
+    .pixel_data(oled_data), 
+    .cs(Jx[0]), 
+    .sdin(Jx[1]), 
+    .sclk(Jx[3]), 
+    .d_cn(Jx[4]), 
+    .resn(Jx[5]), 
+    .vccen(Jx[6]), 
+    .pmoden(Jx[7])
+);
+
+// Parameters for bar display
+localparam BAR_WIDTH = 8;
+localparam BAR_SPACING = 2;
+localparam BAR_COLOR = 16'h07E0; // Green color
+localparam BACKGROUND_COLOR = 16'h0000; // Black background
+
+reg [6:0] bar_heights [4:0];
+reg [6:0] bar_heights_sorted [4:0];
+reg [6:0] temp;
+reg [6:0] counter;
 integer i, j;
-reg [3:0] temp;
 
 always @(posedge clk) begin
-    if (rst) begin
-        for (i = 0; i < 4; i = i + 1) begin
-            nums[i] <= 0;
+    if (sw0) begin
+        counter <= counter + 1; // Increment counter
+        for (i = 0; i < 5; i = i + 1) begin
+            bar_heights[i] <= (counter * 37 + i * 17) % 64; // Generate more random heights
         end
-        count <= 0;
-        sorting_done <= 0;
-    end else if (load_num) begin
-        nums[count] <= random_num % 10;
-        count <= count + 1;
-    end else if (sort_trigger && !sorting_done) begin
-        sorting_done <= 1; // Assume sorting is done initially
-        for (i = 0; i < 3; i = i + 1) begin
-            for (j = 0; j < 3 - i; j = j + 1) begin
-                if (nums[j] > nums[j + 1]) begin
-                    // Swap elements using a temporary variable
-                    temp = nums[j];
-                    nums[j] <= nums[j + 1];
-                    nums[j + 1] <= temp;
-                    sorting_done <= 0; // Set sorting_done to 0 if a swap occurs
+    end else begin
+        for (i = 0; i < 5; i = i + 1) begin
+            bar_heights[i] <= (i + 1) * 10; // Set increasing heights for the bars
+        end
+    end
+end
+
+always @(*) begin
+    // Copy the bar heights to the sorted array
+    for (i = 0; i < 5; i = i + 1) begin
+        bar_heights_sorted[i] = bar_heights[i];
+    end
+    
+    // Perform bubble sort by passing through the entire list 10 times
+    if (sw0 && sw1) begin
+        for (i = 0; i < 4; i = i + 1) begin
+            for (j = 0; j < 4 - i; j = j + 1) begin
+                if (bar_heights_sorted[j] > bar_heights_sorted[j + 1]) begin
+                    // Swap adjacent bars if they are in the wrong order
+                    // Use a temporary variable for swapping
+                    temp = bar_heights_sorted[j];
+                    bar_heights_sorted[j] = bar_heights_sorted[j + 1];
+                    bar_heights_sorted[j + 1] = temp;
                 end
             end
         end
-        
-        // Assign sorted numbers to individual outputs
-        sorted_nums_0 <= nums[0];
-        sorted_nums_1 <= nums[1];
-        sorted_nums_2 <= nums[2];
-        sorted_nums_3 <= nums[3];
+    end
+end
+
+
+always @(*) begin
+    // Set the color of the current pixel based on its horizontal position
+    if ((pixel_index % 96) < (BAR_WIDTH * 10 + BAR_SPACING * 9)) begin
+        // Inside the bar area
+        if (((pixel_index % 96) / (BAR_WIDTH + BAR_SPACING)) % 2 == 0) begin
+            // Calculate the bar index
+            if ((63 - (pixel_index / 96)) < bar_heights_sorted[((pixel_index % 96) / (BAR_WIDTH + BAR_SPACING)) / 2]) begin
+                oled_data = BAR_COLOR;
+            end else begin
+                oled_data = BACKGROUND_COLOR;
+            end
+        end else begin
+            oled_data = BACKGROUND_COLOR;
+        end
+    end else begin
+        // Outside the bar area
+        oled_data = BACKGROUND_COLOR;
     end
 end
 
 endmodule
-
