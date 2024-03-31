@@ -37,42 +37,54 @@ localparam BAR_WIDTH = 8;
 localparam BAR_SPACING = 2;
 localparam BAR_COLOR = 16'h07E0; // Green color
 localparam BACKGROUND_COLOR = 16'h0000; // Black background
+localparam SORT_DELAY = 50000000; // Delay between sort steps (adjust as needed)
 
 reg [6:0] bar_heights [4:0];
-reg [6:0] bar_heights_sorted [4:0];
-reg [6:0] temp;
 reg [6:0] counter;
+reg [31:0] delay_counter; // Counter for sorting delay
+reg sorting; // Flag to indicate sorting is in progress
 integer i, j;
+reg random_bars_generated;
 
 always @(posedge clk) begin
-    if (sw0) begin
+    if (!sw0) begin
+        for (i = 0; i < 5; i = i + 1) begin
+            bar_heights[i] <= (i + 1) * 10; // Set increasing heights for the bars
+        end
+        sorting <= 0;
+        delay_counter <= 0;
+        j <= 0;
+        random_bars_generated <= 0; // Reset the flag
+    end else if (sw0 && !sw1 && !random_bars_generated) begin
         counter <= counter + 1; // Increment counter
         for (i = 0; i < 5; i = i + 1) begin
             bar_heights[i] <= (counter * 37 + i * 17) % 64; // Generate more random heights
         end
-    end else begin
-        for (i = 0; i < 5; i = i + 1) begin
-            bar_heights[i] <= (i + 1) * 10; // Set increasing heights for the bars
-        end
-    end
-end
-
-always @(*) begin
-    // Copy the bar heights to the sorted array
-    for (i = 0; i < 5; i = i + 1) begin
-        bar_heights_sorted[i] = bar_heights[i];
-    end
-    
-    // Perform bubble sort by passing through the entire list 10 times
-    if (sw0 && sw1) begin
-        for (i = 0; i < 4; i = i + 1) begin
-            for (j = 0; j < 4 - i; j = j + 1) begin
-                if (bar_heights_sorted[j] > bar_heights_sorted[j + 1]) begin
+        sorting <= 0;
+        delay_counter <= 0;
+        j <= 0;
+        random_bars_generated <= 1; // Set the flag
+    end else if (sw0 && sw1 && !sorting) begin
+        sorting <= 1; // Start sorting
+        i <= 0; // Initialize indices for bubble sort
+        j <= 0;
+    end else if (sorting) begin
+        if (delay_counter < SORT_DELAY) begin
+            delay_counter <= delay_counter + 1; // Increment delay counter
+        end else begin
+            delay_counter <= 0; // Reset delay counter
+            if (j < 4 - i) begin
+                if (bar_heights[j] > bar_heights[j + 1]) begin
                     // Swap adjacent bars if they are in the wrong order
-                    // Use a temporary variable for swapping
-                    temp = bar_heights_sorted[j];
-                    bar_heights_sorted[j] = bar_heights_sorted[j + 1];
-                    bar_heights_sorted[j + 1] = temp;
+                    {bar_heights[j], bar_heights[j + 1]} <= {bar_heights[j + 1], bar_heights[j]};
+                end
+                j <= j + 1; // Move to the next pair
+            end else begin
+                if (i < 3) begin
+                    i <= i + 1; // Move to the next pass of the bubble sort
+                    j <= 0; // Reset the inner loop counter
+                end else begin
+                    sorting <= 0; // Sorting is complete
                 end
             end
         end
@@ -86,7 +98,7 @@ always @(*) begin
         // Inside the bar area
         if (((pixel_index % 96) / (BAR_WIDTH + BAR_SPACING)) % 2 == 0) begin
             // Calculate the bar index
-            if ((63 - (pixel_index / 96)) < bar_heights_sorted[((pixel_index % 96) / (BAR_WIDTH + BAR_SPACING)) / 2]) begin
+            if ((63 - (pixel_index / 96)) < bar_heights[((pixel_index % 96) / (BAR_WIDTH + BAR_SPACING)) / 2]) begin
                 oled_data = BAR_COLOR;
             end else begin
                 oled_data = BACKGROUND_COLOR;
