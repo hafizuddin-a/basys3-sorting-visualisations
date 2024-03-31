@@ -4,6 +4,7 @@
 module top_module (
     input clk,
     input sw0,
+    input sw1,
     output [7:0] Jx
 );
 

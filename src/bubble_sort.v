@@ -39,9 +39,9 @@ localparam BAR_COLOR = 16'h07E0; // Green color
 localparam BACKGROUND_COLOR = 16'h0000; // Black background
 
 reg [6:0] bar_heights [4:0];
-reg [6:0] bar_heights_swapped [4:0];
+reg [6:0] bar_heights_sorted [4:0];
 reg [6:0] counter;
-integer i;
+integer i, j;
 
 always @(posedge clk) begin
     if (sw0) begin
@@ -57,12 +57,21 @@ always @(posedge clk) begin
 end
 
 always @(*) begin
-    // Swap the first two bars when sw1 is on and the heights are random (sw0 is on)
+    // Copy the bar heights to the sorted array
     for (i = 0; i < 5; i = i + 1) begin
-        if (sw0 && sw1 && i < 2 && bar_heights[1] < bar_heights[0]) begin
-            bar_heights_swapped[i] = bar_heights[1 - i];
-        end else begin
-            bar_heights_swapped[i] = bar_heights[i];
+        bar_heights_sorted[i] = bar_heights[i];
+    end
+    
+    // Perform bubble sort by passing through the entire list 10 times
+    if (sw0 && sw1) begin
+        for (j = 0; j < 10; j = j + 1) begin
+            for (i = 0; i < 4; i = i + 1) begin
+                if (bar_heights_sorted[i] > bar_heights_sorted[i + 1]) begin
+                    // Swap adjacent bars if they are in the wrong order
+                    bar_heights_sorted[i] <= bar_heights_sorted[i + 1];
+                    bar_heights_sorted[i + 1] <= bar_heights_sorted[i];
+                end
+            end
         end
     end
 end
@@ -73,7 +82,7 @@ always @(*) begin
         // Inside the bar area
         if (((pixel_index % 96) / (BAR_WIDTH + BAR_SPACING)) % 2 == 0) begin
             // Calculate the bar index
-            if ((63 - (pixel_index / 96)) < bar_heights_swapped[((pixel_index % 96) / (BAR_WIDTH + BAR_SPACING)) / 2]) begin
+            if ((63 - (pixel_index / 96)) < bar_heights_sorted[((pixel_index % 96) / (BAR_WIDTH + BAR_SPACING)) / 2]) begin
                 oled_data = BAR_COLOR;
             end else begin
                 oled_data = BACKGROUND_COLOR;
