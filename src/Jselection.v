@@ -85,7 +85,9 @@ always @(posedge clk) begin
                     j <= j + 1; // Move to the next index
                 end else begin
                     // Swap the values at i and min_index
-                    {bar_heights[i], bar_heights[min_index]} <= {bar_heights[min_index], bar_heights[i]}; // Uncomment the swap operation
+                    if (min_index != i) begin
+                        {bar_heights[i], bar_heights[min_index]} <= {bar_heights[min_index], bar_heights[i]}; // Uncomment the swap operation
+                    end
                     i <= i + 1; // Move to the next pass of the selection sort
                     j <= i + 1; // Reset inner loop counter
                     min_index <= i + 1; // Reset min_index
