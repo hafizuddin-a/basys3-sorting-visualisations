@@ -40,6 +40,7 @@ localparam BACKGROUND_COLOR = 16'h0000; // Black background
 
 reg [6:0] bar_heights [4:0];
 reg [6:0] bar_heights_sorted [4:0];
+reg [6:0] temp;
 reg [6:0] counter;
 integer i, j;
 
@@ -68,13 +69,16 @@ always @(*) begin
             for (j = 0; j < 4 - i; j = j + 1) begin
                 if (bar_heights_sorted[j] > bar_heights_sorted[j + 1]) begin
                     // Swap adjacent bars if they are in the wrong order
-                    bar_heights_sorted[j] <= bar_heights_sorted[j + 1];
-                    bar_heights_sorted[j + 1] <= bar_heights_sorted[j];
+                    // Use a temporary variable for swapping
+                    temp = bar_heights_sorted[j];
+                    bar_heights_sorted[j] = bar_heights_sorted[j + 1];
+                    bar_heights_sorted[j + 1] = temp;
                 end
             end
         end
     end
 end
+
 
 always @(*) begin
     // Set the color of the current pixel based on its horizontal position
