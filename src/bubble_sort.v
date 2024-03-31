@@ -43,11 +43,13 @@ reg [6:0] bar_heights [4:0];
 reg [6:0] counter;
 reg [31:0] delay_counter; // Counter for sorting delay
 reg sorting; // Flag to indicate sorting is in progress
+reg sorted; // Flag to indicate sorting is complete
 integer i, j;
 reg random_bars_generated;
 
 always @(posedge clk) begin
     if (!sw0) begin
+        // Reset everything when sw0 is turned off
         for (i = 0; i < 5; i = i + 1) begin
             bar_heights[i] <= (i + 1) * 10; // Set increasing heights for the bars
         end
@@ -55,7 +57,9 @@ always @(posedge clk) begin
         delay_counter <= 0;
         j <= 0;
         random_bars_generated <= 0; // Reset the flag
+        sorted <= 0; // Reset the sorted flag
     end else if (sw0 && !sw1 && !random_bars_generated) begin
+        // Generate random bars when sw0 is turned on and sw1 is off
         counter <= counter + 1; // Increment counter
         for (i = 0; i < 5; i = i + 1) begin
             bar_heights[i] <= (counter * 37 + i * 17) % 64; // Generate more random heights
@@ -64,7 +68,8 @@ always @(posedge clk) begin
         delay_counter <= 0;
         j <= 0;
         random_bars_generated <= 1; // Set the flag
-    end else if (sw0 && sw1 && !sorting) begin
+        sorted <= 0; // Reset the sorted flag
+    end else if (sw0 && sw1 && !sorting && !sorted) begin
         sorting <= 1; // Start sorting
         i <= 0; // Initialize indices for bubble sort
         j <= 0;
@@ -85,6 +90,7 @@ always @(posedge clk) begin
                     j <= 0; // Reset the inner loop counter
                 end else begin
                     sorting <= 0; // Sorting is complete
+                    sorted <= 1; // Set the sorted flag
                 end
             end
         end
