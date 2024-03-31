@@ -9,6 +9,7 @@ module top_module (
 
 bubble_sort bubble_sort_inst (
     .clk(clk),
+    .sw0(sw0),
     .Jx(Jx)
 );
 
