@@ -36,12 +36,26 @@ localparam BAR_SPACING = 2;
 localparam BAR_COLOR = 16'h07E0; // Green color
 localparam BACKGROUND_COLOR = 16'h0000; // Black background
 
+reg [6:0] bar_heights [4:0];
+integer i;
+
+initial begin
+    for (i = 0; i < 5; i = i + 1) begin
+        bar_heights[i] = (i + 1) * 10; // Set increasing heights for the bars
+    end
+end
+
 always @(*) begin
     // Set the color of the current pixel based on its horizontal position
     if ((pixel_index % 96) < (BAR_WIDTH * 10 + BAR_SPACING * 9)) begin
         // Inside the bar area
         if (((pixel_index % 96) / (BAR_WIDTH + BAR_SPACING)) % 2 == 0) begin
-            oled_data = BAR_COLOR;
+            // Calculate the bar index
+            if ((63 - (pixel_index / 96)) < bar_heights[((pixel_index % 96) / (BAR_WIDTH + BAR_SPACING)) / 2]) begin
+                oled_data = BAR_COLOR;
+            end else begin
+                oled_data = BACKGROUND_COLOR;
+            end
         end else begin
             oled_data = BACKGROUND_COLOR;
         end

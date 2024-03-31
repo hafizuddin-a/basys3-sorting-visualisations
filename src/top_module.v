@@ -3,6 +3,7 @@
 // top_module module
 module top_module (
     input clk,
+    input sw0,
     output [7:0] Jx
 );
 
