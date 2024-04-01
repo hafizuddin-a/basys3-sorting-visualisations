@@ -56,9 +56,6 @@ reg btnC_prev; // To store the previous state of btnC for debouncing
 reg btnR_prev; // To store the previous state of btnR for debouncing
 reg btnL_prev; // To store the previous state of btnL for debouncing
 
-reg [6:0] bar_heights_history [19:0]; // History buffer for bar heights (5 bars * 4 steps)
-integer step; // Current step in the history buffer
-
 always @(posedge clk) begin
     if (!sw0) begin
         // Reset everything when sw0 is turned off
@@ -96,11 +93,6 @@ always @(posedge clk) begin
                 if (bar_heights[j] > bar_heights[j + 1]) begin
                     // Swap adjacent bars if they are in the wrong order
                     {bar_heights[j], bar_heights[j + 1]} <= {bar_heights[j + 1], bar_heights[j]};
-                    // Update history buffer after a swap
-                    for (k = 0; k < 5; k = k + 1) begin
-                        bar_heights_history[step * 5 + k] <= bar_heights[k];
-                    end
-                    step <= step + 1;
                 end
                 j <= j + 1; // Move to the next pair
             end else begin
@@ -139,14 +131,14 @@ always @(posedge clk) begin
     end
     btnR_prev <= btnR; // Update the previous state of btnR
 
-    // Debouncing logic for btnL to revert to the previous step
-    if (btnL && !btnL_prev && pause && step > 0) begin
-        step <= step - 1; // Go back one step in the history
-        for (k = 0; k < 5; k = k + 1) begin
-            bar_heights[k] <= bar_heights_history[step * 5 + k];
+    // Debouncing logic for btnL to move to the previous step when paused
+    if (btnL && !btnL_prev && pause) begin
+        if (j > 0) begin
+            j <= j - 1; // Move to the previous pair
+        end else if (i > 0) begin
+            i <= i - 1; // Move to the previous pass of the bubble sort
+            j <= 3; // Set j to the last pair of the previous pass
         end
-        // Update j to the previous pair (assuming 4 pairs per pass)
-        j <= (j == 0) ? 3 : j - 1;
     end
     btnL_prev <= btnL; // Update the previous state of btnL
 end
