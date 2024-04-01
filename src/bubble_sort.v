@@ -6,6 +6,9 @@ module bubble_sort (
     input clk,
     input sw0,
     input sw1, // TODO: Rename switches
+    input btnC,
+    input btnR,
+    input btnL,
     output [7:0] Jx
 );
 
@@ -47,6 +50,8 @@ reg sorting; // Flag to indicate sorting is in progress
 reg sorted; // Flag to indicate sorting is complete
 integer i, j;
 reg random_bars_generated;
+reg pause; // Flag to indicate if sorting is paused
+reg btnC_prev; // To store the previous state of btnC for debouncing
 
 always @(posedge clk) begin
     if (!sw0) begin
@@ -59,6 +64,7 @@ always @(posedge clk) begin
         j <= 0;
         random_bars_generated <= 0; // Reset the flag
         sorted <= 0; // Reset the sorted flag
+        pause <= 0; // Reset the pause flag
     end else if (sw0 && !sw1 && !random_bars_generated) begin
         // Generate random bars when sw0 is turned on and sw1 is off
         counter <= counter + 1; // Increment counter
@@ -70,11 +76,12 @@ always @(posedge clk) begin
         j <= 0;
         random_bars_generated <= 1; // Set the flag
         sorted <= 0; // Reset the sorted flag
-    end else if (sw0 && sw1 && !sorting && !sorted) begin
+        pause <= 0; // Ensure sorting is not paused when generating bars
+    end else if (sw0 && sw1 && !sorting && !sorted && !pause) begin
         sorting <= 1; // Start sorting
         i <= 0; // Initialize indices for bubble sort
         j <= 0;
-    end else if (sorting) begin
+    end else if (sorting && !pause) begin
         if (delay_counter < SORT_DELAY) begin
             delay_counter <= delay_counter + 1; // Increment delay counter
         end else begin
@@ -96,6 +103,11 @@ always @(posedge clk) begin
             end
         end
     end
+    // Debouncing logic for btnC to toggle the pause flag
+    if (btnC && !btnC_prev) begin
+        pause <= !pause; // Toggle the pause flag
+    end
+    btnC_prev <= btnC; // Update the previous state of btnC
 end
 
 // Additional color definitions
