@@ -6,6 +6,8 @@ module top_module (
     input sw0,
     input sw1,
     input btnC,
+    input btnR,
+    input btnL,
     output [7:0] Jx
 );
 
@@ -14,6 +16,8 @@ bubble_sort bubble_sort_inst (
     .sw0(sw0),
     .sw1(sw1),
     .btnC(btnC),
+    .btnR(btnR),
+    .btnL(btnL),
     .Jx(Jx)
 );
 

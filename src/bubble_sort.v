@@ -48,10 +48,16 @@ reg [6:0] counter;
 reg [31:0] delay_counter; // Counter for sorting delay
 reg sorting; // Flag to indicate sorting is in progress
 reg sorted; // Flag to indicate sorting is complete
-integer i, j;
+integer i, j, k;
 reg random_bars_generated;
+
 reg pause; // Flag to indicate if sorting is paused
 reg btnC_prev; // To store the previous state of btnC for debouncing
+reg btnR_prev; // To store the previous state of btnR for debouncing
+reg btnL_prev; // To store the previous state of btnL for debouncing
+
+reg [6:0] bar_heights_history [19:0]; // History buffer for bar heights (5 bars * 4 steps)
+integer step; // Current step in the history buffer
 
 always @(posedge clk) begin
     if (!sw0) begin
@@ -90,6 +96,11 @@ always @(posedge clk) begin
                 if (bar_heights[j] > bar_heights[j + 1]) begin
                     // Swap adjacent bars if they are in the wrong order
                     {bar_heights[j], bar_heights[j + 1]} <= {bar_heights[j + 1], bar_heights[j]};
+                    // Update history buffer after a swap
+                    for (k = 0; k < 5; k = k + 1) begin
+                        bar_heights_history[step * 5 + k] <= bar_heights[k];
+                    end
+                    step <= step + 1;
                 end
                 j <= j + 1; // Move to the next pair
             end else begin
@@ -108,6 +119,36 @@ always @(posedge clk) begin
         pause <= !pause; // Toggle the pause flag
     end
     btnC_prev <= btnC; // Update the previous state of btnC
+    
+    // Debouncing logic for btnR to move to the next step when paused
+    if (btnR && !btnR_prev && pause && !sorted) begin
+        if (j < 4 - i) begin
+            if (bar_heights[j] > bar_heights[j + 1]) begin
+                // Swap adjacent bars if they are in the wrong order
+                {bar_heights[j], bar_heights[j + 1]} <= {bar_heights[j + 1], bar_heights[j]};
+            end
+            j <= j + 1; // Move to the next pair
+        end else begin
+            if (i < 3) begin
+                i <= i + 1; // Move to the next pass of the bubble sort
+                j <= 0; // Reset the inner loop counter
+            end else begin
+                sorted <= 1; // Sorting is complete
+            end
+        end
+    end
+    btnR_prev <= btnR; // Update the previous state of btnR
+
+    // Debouncing logic for btnL to revert to the previous step
+    if (btnL && !btnL_prev && pause && step > 0) begin
+        step <= step - 1; // Go back one step in the history
+        for (k = 0; k < 5; k = k + 1) begin
+            bar_heights[k] <= bar_heights_history[step * 5 + k];
+        end
+        // Update j to the previous pair (assuming 4 pairs per pass)
+        j <= (j == 0) ? 3 : j - 1;
+    end
+    btnL_prev <= btnL; // Update the previous state of btnL
 end
 
 // Additional color definitions
