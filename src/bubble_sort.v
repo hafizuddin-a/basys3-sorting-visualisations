@@ -1,10 +1,11 @@
 `timescale 1ns / 1ps
 
 // bubble_sort module
+// TODO: Use push buttons to control. btnC to stop/continue, btnR for next step, btnL for prev step
 module bubble_sort (
     input clk,
     input sw0,
-    input sw1,
+    input sw1, // TODO: Rename switches
     output [7:0] Jx
 );
 
@@ -37,17 +38,19 @@ localparam BAR_WIDTH = 8;
 localparam BAR_SPACING = 2;
 localparam BAR_COLOR = 16'h07E0; // Green color
 localparam BACKGROUND_COLOR = 16'h0000; // Black background
-localparam SORT_DELAY = 50000000; // Delay between sort steps (adjust as needed)
+localparam SORT_DELAY = 100_000_000; // Delay between sort steps (adjust as needed)
 
 reg [6:0] bar_heights [4:0];
 reg [6:0] counter;
 reg [31:0] delay_counter; // Counter for sorting delay
 reg sorting; // Flag to indicate sorting is in progress
+reg sorted; // Flag to indicate sorting is complete
 integer i, j;
 reg random_bars_generated;
 
 always @(posedge clk) begin
     if (!sw0) begin
+        // Reset everything when sw0 is turned off
         for (i = 0; i < 5; i = i + 1) begin
             bar_heights[i] <= (i + 1) * 10; // Set increasing heights for the bars
         end
@@ -55,16 +58,19 @@ always @(posedge clk) begin
         delay_counter <= 0;
         j <= 0;
         random_bars_generated <= 0; // Reset the flag
+        sorted <= 0; // Reset the sorted flag
     end else if (sw0 && !sw1 && !random_bars_generated) begin
+        // Generate random bars when sw0 is turned on and sw1 is off
         counter <= counter + 1; // Increment counter
         for (i = 0; i < 5; i = i + 1) begin
             bar_heights[i] <= (counter * 37 + i * 17) % 64; // Generate more random heights
         end
-        sorting <= 0;
+        sorting <= 0; // Ensure sorting is not started yet
         delay_counter <= 0;
         j <= 0;
         random_bars_generated <= 1; // Set the flag
-    end else if (sw0 && sw1 && !sorting) begin
+        sorted <= 0; // Reset the sorted flag
+    end else if (sw0 && sw1 && !sorting && !sorted) begin
         sorting <= 1; // Start sorting
         i <= 0; // Initialize indices for bubble sort
         j <= 0;
@@ -85,31 +91,47 @@ always @(posedge clk) begin
                     j <= 0; // Reset the inner loop counter
                 end else begin
                     sorting <= 0; // Sorting is complete
+                    sorted <= 1; // Set the sorted flag
                 end
             end
         end
     end
 end
 
+// Additional color definitions
+localparam YELLOW_COLOR = 16'hFFE0; // Yellow color
+localparam RED_COLOR = 16'hF800; // Red color
+integer bar_index;
 
+// Add more logic in the display block to change colors
 always @(*) begin
-    // Set the color of the current pixel based on its horizontal position
-    if ((pixel_index % 96) < (BAR_WIDTH * 10 + BAR_SPACING * 9)) begin
-        // Inside the bar area
-        if (((pixel_index % 96) / (BAR_WIDTH + BAR_SPACING)) % 2 == 0) begin
-            // Calculate the bar index
-            if ((63 - (pixel_index / 96)) < bar_heights[((pixel_index % 96) / (BAR_WIDTH + BAR_SPACING)) / 2]) begin
+    bar_index = ((pixel_index % 96) / (BAR_WIDTH + BAR_SPACING)) / 2; // Calculate the bar index
+
+    // Default color is black (background)
+    oled_data = BACKGROUND_COLOR;
+    
+    if ((pixel_index % 96) < (BAR_WIDTH * 10 + BAR_SPACING * 9)) begin // Inside the bar area
+        if (((pixel_index % 96) / (BAR_WIDTH + BAR_SPACING)) % 2 == 0) begin // Inside a bar
+            if ((63 - (pixel_index / 96)) < bar_heights[bar_index]) begin
+                // Default bar color
                 oled_data = BAR_COLOR;
-            end else begin
-                oled_data = BACKGROUND_COLOR;
+    
+                // If sorting is in progress, color bars accordingly
+                if (sorting) begin
+                    // If the bar is currently being compared, color it yellow
+                    if (bar_index == j || bar_index == j + 1) begin
+                        oled_data = YELLOW_COLOR;
+                    end
+    
+                    // If the bar is in the sorted position, color it red
+                    if (bar_index >= 5 - i) begin
+                        oled_data = RED_COLOR;
+                    end
+                end
             end
-        end else begin
-            oled_data = BACKGROUND_COLOR;
         end
-    end else begin
-        // Outside the bar area
-        oled_data = BACKGROUND_COLOR;
     end
 end
+
 
 endmodule
