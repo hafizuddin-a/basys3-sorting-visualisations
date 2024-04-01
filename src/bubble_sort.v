@@ -1,10 +1,11 @@
 `timescale 1ns / 1ps
 
 // bubble_sort module
+// TODO: Use push buttons to control. btnC to stop/continue, btnR for next step, btnL for prev step
 module bubble_sort (
     input clk,
     input sw0,
-    input sw1,
+    input sw1, // TODO: Rename switches
     output [7:0] Jx
 );
 
@@ -37,7 +38,7 @@ localparam BAR_WIDTH = 8;
 localparam BAR_SPACING = 2;
 localparam BAR_COLOR = 16'h07E0; // Green color
 localparam BACKGROUND_COLOR = 16'h0000; // Black background
-localparam SORT_DELAY = 50000000; // Delay between sort steps (adjust as needed)
+localparam SORT_DELAY = 100_000_000; // Delay between sort steps (adjust as needed)
 
 reg [6:0] bar_heights [4:0];
 reg [6:0] counter;
@@ -96,7 +97,6 @@ always @(posedge clk) begin
         end
     end
 end
-
 
 // Additional color definitions
 localparam YELLOW_COLOR = 16'hFFE0; // Yellow color
