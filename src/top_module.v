@@ -90,30 +90,29 @@ module top_module (
                 end
             endcase
         end
-        else if (sorting_algorithm == 4'b1000) begin //quick sorting (?)
+        else if (sorting_algorithm == 4'b1000) begin //cock sorting 
             case (anode_index) 
                 2'b00: begin
                     an = 4'b0111;
-                    seg = 7'b0110001;
+                    seg = 7'b1010000;
                 end
                 2'b01: begin
                     an = 4'b1011;
-                    seg = 7'b1001111;
+                    seg = 7'b0110001;
                 end
                 2'b10: begin
                     an = 4'b1101;
-                    seg = 7'b1000001;
+                    seg = 7'b0000001;
                 end
                 2'b11: begin
                     an = 4'b1110;
-                    seg = 4'b0001100;
+                    seg = 7'b0110001;
                 end
             endcase
         end
     end
     
 
-    //bubble_sort bubble_sort_inst (
     insertion_sort insertion_sort_inst (
         .clk(clk),
         .sw0(sw0),

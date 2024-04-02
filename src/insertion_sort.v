@@ -20,31 +20,6 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-/*module insertion_sort (
-	input clk,
-	input [9:0] nums_arr,
-	output [9:0] nums_sorted,
-	output reg sorting_done
-);
-
-	reg [3:0] i, j;
-	reg [3:0] key;
-	
-	always @(posedge clk) begin
-		for (i = 1; i < 10; i = i + 1) begin
-			key = nums_arr[i];
-			j = i - 1;
-			while (j >= 0 && nums_arr[j] > key) begin
-				nums_arr[j + 1] = nums_arr[j];
-				j = j - 1;
-			end
-			nums_arr[j + 1] = key;
-		end
-		sorting_done = 1;
-	end
-
-endmodule*/
-
 module insertion_sort(
 	input clk,
     input sw0,
@@ -134,21 +109,6 @@ always @(posedge clk) begin
 			end else begin 
 				sorted <= 1;
 			end
-            /*if (j < 4 - i) begin
-                if (bar_heights[j] > bar_heights[j + 1]) begin
-                    // Swap adjacent bars if they are in the wrong order
-                    {bar_heights[j], bar_heights[j + 1]} <= {bar_heights[j + 1], bar_heights[j]};
-                end
-                j <= j + 1; // Move to the next pair
-            end else begin
-                if (i < 3) begin
-                    i <= i + 1; // Move to the next pass of the bubble sort
-                    j <= 0; // Reset the inner loop counter
-                end else begin
-                    sorting <= 0; // Sorting is complete
-                    sorted <= 1; // Set the sorted flag
-                end
-            end*/
         end
     end
 end
