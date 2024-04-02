@@ -113,7 +113,8 @@ module top_module (
     end
     
 
-    bubble_sort bubble_sort_inst (
+    //bubble_sort bubble_sort_inst (
+    insertion_sort insertion_sort_inst (
         .clk(clk),
         .sw0(sw0),
         .sw1(sw1),
