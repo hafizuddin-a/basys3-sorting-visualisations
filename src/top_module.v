@@ -69,7 +69,7 @@ module top_module (
     wire btnC_debouncer;
     reg is_finished_manual_input = 0;
     debouncer centre_debouncer(clk, btnC, btnC_debouncer);
-    
+
     always @ (posedge clk) begin 
         sorting_algorithm = btnU ? 4'b0001 : 
                             btnD ? 4'b0010 :
@@ -81,7 +81,7 @@ module top_module (
             anode_index <= anode_index + 1;
         end
         if (sorting_algorithm == 4'b0001) begin // bubble sorting
-            case(anode_index) 
+            case (anode_index) 
                 2'b00: begin 
                     an = 4'b0111;
                     seg = 7'b1110001;
@@ -149,6 +149,7 @@ module top_module (
                         end else begin
                             sorting <= 0; // Sorting is complete
                             sorted <= 1; // Set the sorted flag
+                            is_finished_manual_input <= 0;
                         end
                     end
                 end
@@ -173,28 +174,37 @@ module top_module (
                     seg = 7'b0100100;
                 end
             endcase
-            if (!sw[0]) begin
-                for (i = 0; i < 5; i = i + 1) begin
-                    bar_heights[i] <= (i + 1) * 10; // Set increasing heights for the bars
-                end
+            if (!sw[0] && !is_finished_manual_input) begin // manual input mode 
                 sorting <= 0;
-                sorted <= 0; // Reset sorted flag
                 delay_counter <= 0;
                 j <= 0;
                 random_bars_generated <= 0; // Reset the flag
-            end else if (sw[0] && !btnD && !random_bars_generated) begin
+                sorted <= 0; // Reset the sorted flag
+                if (!btnC && curr_index_manual < 5) begin 
+                    curr_digit_manual = sw[1] ? 1 : sw[2] ? 2 : sw[3] ? 3 : sw[4] ? 4 : sw[5] ? 5 :
+                                        sw[6] ? 6 : sw[7] ? 7 : sw[8] ? 8 : sw[9] ? 9 : 0;
+                    bar_heights[curr_index_manual] <= curr_digit_manual * 7;
+                    led[curr_index_manual] <= 1;
+                end else if (btnC_debouncer) begin
+                    led[curr_index_manual] <= 1;
+                    curr_index_manual <= curr_index_manual + 1;
+                    if (curr_index_manual == 5) 
+                        is_finished_manual_input <= 1;
+                end
+            end else if (sw[0] && !btnD && !random_bars_generated) begin // random input mode
                 counter <= counter + 1; // Increment counter
+                is_finished_manual_input = 0;
                 for (i = 0; i < 5; i = i + 1) begin
                     bar_heights[i] <= (counter * 37 + i * 17) % 64; // Generate more random heights
                 end
-                sorting <= 0;
-                sorted <= 0; // Reset sorted flag
+                sorting <= 0; // Ensure sorting is not started yet
                 delay_counter <= 0;
                 j <= 0;
                 random_bars_generated <= 1; // Set the flag
-            end else if (sw[0] && btnD && !sorting && !sorted) begin
+                sorted <= 0; // Reset the sorted flag
+            end else if (btnD && !sorting && !sorted && (is_finished_manual_input || random_bars_generated)) begin
                 sorting <= 1; // Start sorting
-                i <= 0; // Initialize indices for selection sort
+                i <= 0; // Initialize indices for bubble sort
                 j <= 0;
                 min_index <= i; // Set min_index to i for the first pass
             end else if (sorting && !sorted) begin
@@ -222,6 +232,7 @@ module top_module (
                     end else begin
                         sorting <= 0; // Sorting is complete
                         sorted <= 1; // Set sorted flag
+                        is_finished_manual_input <= 0;
                     end
                 end
             end
@@ -245,20 +256,27 @@ module top_module (
                     seg = 7'b1001111;
                 end
             endcase
-            if (!sw[0]) begin
-                // Reset everything when sw[0] is turned off
-                for (i = 0; i < 5; i = i + 1) begin
-                    bar_heights[i] <= (i + 1) * 10; // Set increasing heights for the bars
-                end
+            if (!sw[0] && !is_finished_manual_input) begin // manual input mode 
                 sorting <= 0;
                 delay_counter <= 0;
                 j <= 0;
                 random_bars_generated <= 0; // Reset the flag
                 sorted <= 0; // Reset the sorted flag
-                is_bar_sorted <= 5'b00000;
-            end else if (sw[0] && !btnR && !random_bars_generated) begin
-                // Generate random bars when sw[0] is turned on and sw[1] is off
+                is_bar_sorted <= 0;
+                if (!btnC && curr_index_manual < 5) begin 
+                    curr_digit_manual = sw[1] ? 1 : sw[2] ? 2 : sw[3] ? 3 : sw[4] ? 4 : sw[5] ? 5 :
+                                        sw[6] ? 6 : sw[7] ? 7 : sw[8] ? 8 : sw[9] ? 9 : 0;
+                    bar_heights[curr_index_manual] <= curr_digit_manual * 7;
+                    led[curr_index_manual] <= 1;
+                end else if (btnC_debouncer) begin
+                    led[curr_index_manual] <= 1;
+                    curr_index_manual <= curr_index_manual + 1;
+                    if (curr_index_manual == 5) 
+                        is_finished_manual_input <= 1;
+                end
+            end else if (sw[0] && !btnR && !random_bars_generated) begin // random input mode
                 counter <= counter + 1; // Increment counter
+                is_finished_manual_input = 0;
                 for (i = 0; i < 5; i = i + 1) begin
                     bar_heights[i] <= (counter * 37 + i * 17) % 64; // Generate more random heights
                 end
@@ -267,9 +285,9 @@ module top_module (
                 j <= 0;
                 random_bars_generated <= 1; // Set the flag
                 sorted <= 0; // Reset the sorted flag
-            end else if (sw[0] && btnR && !sorting && !sorted) begin
+            end else if (btnR && !sorting && !sorted && (is_finished_manual_input || random_bars_generated)) begin
                 sorting <= 1; // Start sorting
-                i <= 1; // Initialize indices for insertion sort
+                i <= 1; // Initialize indices for bubble sort
                 j <= 1;
                 is_bar_sorted <= 5'b10000;
             end else if (sorting) begin // insertion sorting 
@@ -294,6 +312,7 @@ module top_module (
                     end else begin 
                         sorted <= 1;
                         sorting <= 0;
+                        is_finished_manual_input <= 0;
                     end
                 end
             end
@@ -317,19 +336,26 @@ module top_module (
                     seg = 7'b0110001;
                 end
             endcase
-            if (!sw[0]) begin
-                // Reset everything when sw[0] is turned off
-                for (i = 0; i < 5; i = i + 1) begin
-                    bar_heights[i] <= (i + 1) * 10; // Set increasing heights for the bars
-                end
+            if (!sw[0] && !is_finished_manual_input) begin // manual input mode 
                 sorting <= 0;
                 delay_counter <= 0;
                 j <= 0;
                 random_bars_generated <= 0; // Reset the flag
                 sorted <= 0; // Reset the sorted flag
-            end else if (sw[0] && !btnL && !random_bars_generated) begin
-                // Generate random bars when sw[0] is turned on and sw[1] is off
+                if (!btnC && curr_index_manual < 5) begin 
+                    curr_digit_manual = sw[1] ? 1 : sw[2] ? 2 : sw[3] ? 3 : sw[4] ? 4 : sw[5] ? 5 :
+                                        sw[6] ? 6 : sw[7] ? 7 : sw[8] ? 8 : sw[9] ? 9 : 0;
+                    bar_heights[curr_index_manual] <= curr_digit_manual * 7;
+                    led[curr_index_manual] <= 1;
+                end else if (btnC_debouncer) begin
+                    led[curr_index_manual] <= 1;
+                    curr_index_manual <= curr_index_manual + 1;
+                    if (curr_index_manual == 5) 
+                        is_finished_manual_input <= 1;
+                end
+            end else if (sw[0] && !btnL && !random_bars_generated) begin // random input mode
                 counter <= counter + 1; // Increment counter
+                is_finished_manual_input = 0;
                 for (i = 0; i < 5; i = i + 1) begin
                     bar_heights[i] <= (counter * 37 + i * 17) % 64; // Generate more random heights
                 end
@@ -338,7 +364,7 @@ module top_module (
                 j <= 0;
                 random_bars_generated <= 1; // Set the flag
                 sorted <= 0; // Reset the sorted flag
-            end else if (sw[0] && btnL && !sorting && !sorted) begin
+            end else if (btnL && !sorting && !sorted && (is_finished_manual_input || random_bars_generated)) begin
                 sorting <= 1; // Start sorting
                 i <= 0; // Initialize indices for bubble sort
                 j <= 0;
@@ -377,11 +403,11 @@ module top_module (
                         else begin
                             sorting <= 0; // Sorting is complete
                             sorted <= 1; // Set the sorted flag
+                            is_finished_manual_input <= 0;
                         end
                     end
                 end
-            end
-
+            end 
         end
     end
     
