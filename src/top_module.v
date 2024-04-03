@@ -2,15 +2,15 @@
 
 // top_module module
 module top_module (
+    input btnC,
     input btnU,
     input btnD, 
     input btnL, 
     input btnR,
+    input [0:9] sw,
+    output reg [8:0] led,
     
     input clk,
-    input sw0,
-    input sw1,
-    input sw2,
     output [7:0] Jx,
     output reg [0:3] an = 4'b1111,
     output reg [0:6] seg = 7'b1111111
@@ -63,6 +63,12 @@ module top_module (
     integer i, j, min_index;
     reg dir; // Flag for direction of sorting
     reg random_bars_generated;
+    reg [3:0] curr_digit_manual; // digit to manually input from 1 - 9
+    reg [2:0] curr_index_manual = 3'b000; // digit index for manual input
+    // reg [4:0] one_hot_led_index = 5'b00001;
+    wire btnC_debouncer;
+    reg is_finished_manual_input = 0;
+    debouncer centre_debouncer(clk, btnC, btnC_debouncer);
     
     always @ (posedge clk) begin 
         sorting_algorithm = btnU ? 4'b0001 : 
@@ -93,19 +99,26 @@ module top_module (
                     seg = 7'b1100000;
                 end
             endcase
-            if (!sw0) begin
-                // Reset everything when sw0 is turned off
-                for (i = 0; i < 5; i = i + 1) begin
-                    bar_heights[i] <= (i + 1) * 10; // Set increasing heights for the bars
-                end
+            if (!sw[0] && !is_finished_manual_input) begin // manual input mode 
                 sorting <= 0;
                 delay_counter <= 0;
                 j <= 0;
                 random_bars_generated <= 0; // Reset the flag
                 sorted <= 0; // Reset the sorted flag
-            end else if (sw0 && !btnU && !random_bars_generated) begin
-                // Generate random bars when sw0 is turned on and sw1 is off
+                if (!btnC && curr_index_manual < 5) begin 
+                    curr_digit_manual = sw[1] ? 1 : sw[2] ? 2 : sw[3] ? 3 : sw[4] ? 4 : sw[5] ? 5 :
+                                        sw[6] ? 6 : sw[7] ? 7 : sw[8] ? 8 : sw[9] ? 9 : 0;
+                    bar_heights[curr_index_manual] <= curr_digit_manual * 7;
+                    led[curr_index_manual] <= 1;
+                end else if (btnC_debouncer) begin
+                    led[curr_index_manual] <= 1;
+                    curr_index_manual <= curr_index_manual + 1;
+                    if (curr_index_manual == 5) 
+                        is_finished_manual_input <= 1;
+                end
+            end else if (sw[0] && !btnU && !random_bars_generated) begin // random input mode
                 counter <= counter + 1; // Increment counter
+                is_finished_manual_input = 0;
                 for (i = 0; i < 5; i = i + 1) begin
                     bar_heights[i] <= (counter * 37 + i * 17) % 64; // Generate more random heights
                 end
@@ -114,7 +127,7 @@ module top_module (
                 j <= 0;
                 random_bars_generated <= 1; // Set the flag
                 sorted <= 0; // Reset the sorted flag
-            end else if (sw0 && btnU && !sorting && !sorted) begin
+            end else if (btnU && !sorting && !sorted && (is_finished_manual_input || random_bars_generated)) begin
                 sorting <= 1; // Start sorting
                 i <= 0; // Initialize indices for bubble sort
                 j <= 0;
@@ -160,7 +173,7 @@ module top_module (
                     seg = 7'b0100100;
                 end
             endcase
-            if (!sw0) begin
+            if (!sw[0]) begin
                 for (i = 0; i < 5; i = i + 1) begin
                     bar_heights[i] <= (i + 1) * 10; // Set increasing heights for the bars
                 end
@@ -169,7 +182,7 @@ module top_module (
                 delay_counter <= 0;
                 j <= 0;
                 random_bars_generated <= 0; // Reset the flag
-            end else if (sw0 && !btnD && !random_bars_generated) begin
+            end else if (sw[0] && !btnD && !random_bars_generated) begin
                 counter <= counter + 1; // Increment counter
                 for (i = 0; i < 5; i = i + 1) begin
                     bar_heights[i] <= (counter * 37 + i * 17) % 64; // Generate more random heights
@@ -179,7 +192,7 @@ module top_module (
                 delay_counter <= 0;
                 j <= 0;
                 random_bars_generated <= 1; // Set the flag
-            end else if (sw0 && btnD && !sorting && !sorted) begin
+            end else if (sw[0] && btnD && !sorting && !sorted) begin
                 sorting <= 1; // Start sorting
                 i <= 0; // Initialize indices for selection sort
                 j <= 0;
@@ -232,8 +245,8 @@ module top_module (
                     seg = 7'b1001111;
                 end
             endcase
-            if (!sw0) begin
-                // Reset everything when sw0 is turned off
+            if (!sw[0]) begin
+                // Reset everything when sw[0] is turned off
                 for (i = 0; i < 5; i = i + 1) begin
                     bar_heights[i] <= (i + 1) * 10; // Set increasing heights for the bars
                 end
@@ -243,8 +256,8 @@ module top_module (
                 random_bars_generated <= 0; // Reset the flag
                 sorted <= 0; // Reset the sorted flag
                 is_bar_sorted <= 5'b00000;
-            end else if (sw0 && !btnR && !random_bars_generated) begin
-                // Generate random bars when sw0 is turned on and sw1 is off
+            end else if (sw[0] && !btnR && !random_bars_generated) begin
+                // Generate random bars when sw[0] is turned on and sw[1] is off
                 counter <= counter + 1; // Increment counter
                 for (i = 0; i < 5; i = i + 1) begin
                     bar_heights[i] <= (counter * 37 + i * 17) % 64; // Generate more random heights
@@ -254,7 +267,7 @@ module top_module (
                 j <= 0;
                 random_bars_generated <= 1; // Set the flag
                 sorted <= 0; // Reset the sorted flag
-            end else if (sw0 && btnR && !sorting && !sorted) begin
+            end else if (sw[0] && btnR && !sorting && !sorted) begin
                 sorting <= 1; // Start sorting
                 i <= 1; // Initialize indices for insertion sort
                 j <= 1;
@@ -304,8 +317,8 @@ module top_module (
                     seg = 7'b0110001;
                 end
             endcase
-            if (!sw0) begin
-                // Reset everything when sw0 is turned off
+            if (!sw[0]) begin
+                // Reset everything when sw[0] is turned off
                 for (i = 0; i < 5; i = i + 1) begin
                     bar_heights[i] <= (i + 1) * 10; // Set increasing heights for the bars
                 end
@@ -314,8 +327,8 @@ module top_module (
                 j <= 0;
                 random_bars_generated <= 0; // Reset the flag
                 sorted <= 0; // Reset the sorted flag
-            end else if (sw0 && !btnL && !random_bars_generated) begin
-                // Generate random bars when sw0 is turned on and sw1 is off
+            end else if (sw[0] && !btnL && !random_bars_generated) begin
+                // Generate random bars when sw[0] is turned on and sw[1] is off
                 counter <= counter + 1; // Increment counter
                 for (i = 0; i < 5; i = i + 1) begin
                     bar_heights[i] <= (counter * 37 + i * 17) % 64; // Generate more random heights
@@ -325,7 +338,7 @@ module top_module (
                 j <= 0;
                 random_bars_generated <= 1; // Set the flag
                 sorted <= 0; // Reset the sorted flag
-            end else if (sw0 && btnL && !sorting && !sorted) begin
+            end else if (sw[0] && btnL && !sorting && !sorted) begin
                 sorting <= 1; // Start sorting
                 i <= 0; // Initialize indices for bubble sort
                 j <= 0;
@@ -462,21 +475,5 @@ module top_module (
             end
         end
     end
-    
-
-    /*insertion_sort insertion_sort_inst (
-        .clk(clk),
-        .sw0(sw0),
-        .sw1(sw1),
-        .btnR(btnR),
-        .Jx(Jx)
-    );*/
-
-jselection selection_sort_inst (
-    .clk(clk),
-    .sw0(sw0),
-    .sw2(sw2),
-    .Jx(Jx)
-)
 
 endmodule 
