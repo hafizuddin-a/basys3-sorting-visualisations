@@ -92,3 +92,5 @@ my_project/
 *.jou
 *.log
 *.str
+vivado_pid23880.str
+*.str
