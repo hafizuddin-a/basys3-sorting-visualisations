@@ -472,11 +472,6 @@ module top_module (
         .Jx(Jx)
     );*/
 
-jselection selection_sort_inst (
-    .clk(clk),
-    .sw0(sw0),
-    .sw2(sw2),
-    .Jx(Jx)
-)
+
 
 endmodule 
