@@ -24,9 +24,10 @@ module insertion_sort(
 	input clk,
     input sw0,
     input sw1,
+    input btnR,
     output [7:0] Jx
 );
-
+reg is_button_pressed = 0;
 wire frame_begin, sending_pixels, sample_pixel;
 wire [12:0] pixel_index;
 reg [15:0] oled_data;
@@ -63,12 +64,15 @@ reg [6:0] bar_heights [4:0];
 reg [6:0] counter;
 reg [31:0] delay_counter; // Counter for sorting delay
 reg sorting; // Flag to indicate sorting is in progress
+reg [4:0] is_bar_sorted = 5'b00000; // if true, green; yellow otherwise
 reg sorted; // Flag to indicate sorting is complete
 integer i, j;
 reg random_bars_generated;
 
 always @(posedge clk) begin
-    if (!sw0) begin
+    if (btnR) 
+        is_button_pressed = 1;
+    if (!sw0 || !is_button_pressed) begin
         // Reset everything when sw0 is turned off
         for (i = 0; i < 5; i = i + 1) begin
             bar_heights[i] <= (i + 1) * 10; // Set increasing heights for the bars
@@ -78,6 +82,7 @@ always @(posedge clk) begin
         j <= 0;
         random_bars_generated <= 0; // Reset the flag
         sorted <= 0; // Reset the sorted flag
+        is_bar_sorted <= 5'b00000;
     end else if (sw0 && !sw1 && !random_bars_generated) begin
         // Generate random bars when sw0 is turned on and sw1 is off
         counter <= counter + 1; // Increment counter
@@ -89,10 +94,11 @@ always @(posedge clk) begin
         j <= 0;
         random_bars_generated <= 1; // Set the flag
         sorted <= 0; // Reset the sorted flag
-    end else if (sw0 && sw1 && !sorting && !sorted) begin
+    end else if (sw0 && sw1 && !sorting && !sorted && is_button_pressed) begin
         sorting <= 1; // Start sorting
         i <= 1; // Initialize indices for insertion sort
         j <= 1;
+        is_bar_sorted <= 5'b10000;
     end else if (sorting) begin // insertion sorting 
         if (delay_counter < SORT_DELAY) begin
             delay_counter <= delay_counter + 1; // Increment delay counter
@@ -103,11 +109,18 @@ always @(posedge clk) begin
 					{bar_heights[j], bar_heights[j - 1]} <= {bar_heights[j - 1], bar_heights[j]};
 					j <= j - 1;
 				end else begin
+                    case (i)
+                    0: is_bar_sorted <= is_bar_sorted + 5'b01000;
+                    1: is_bar_sorted <= is_bar_sorted + 5'b00100;
+                    2: is_bar_sorted <= is_bar_sorted + 5'b00010;
+                    3: is_bar_sorted <= is_bar_sorted + 5'b00001;
+                    endcase
 					i = i + 1;
 					j = i;
 				end
 			end else begin 
 				sorted <= 1;
+                sorting <= 0;
 			end
         end
     end
@@ -134,14 +147,22 @@ always @(*) begin
                 // If sorting is in progress, color bars accordingly
                 if (sorting) begin
                     // If the bar is currently being compared, color it yellow
-                    if (bar_index == j || bar_index == j - 1) begin
+                    /* if (bar_index == j || bar_index == j - 1) begin
                         oled_data = YELLOW_COLOR;
                     end
     
                     // If the bar is in the sorted position, color it green
                     if (bar_index >= 5 - i) begin
                         oled_data = BAR_COLOR;
-                    end
+                    end */
+                    if (is_bar_sorted[bar_index])
+                        oled_data = BAR_COLOR;
+                    else
+                        oled_data = RED_COLOR;
+                    if (bar_index == j || bar_index == j - 1)
+                        oled_data = YELLOW_COLOR;
+                end else if (sorted) begin
+                    oled_data <= BAR_COLOR;
                 end
             end
         end

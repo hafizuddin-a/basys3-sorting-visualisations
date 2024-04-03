@@ -117,6 +117,7 @@ module top_module (
         .clk(clk),
         .sw0(sw0),
         .sw1(sw1),
+        .btnR(btnR),
         .Jx(Jx)
     );
 
