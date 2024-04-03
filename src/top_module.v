@@ -10,6 +10,7 @@ module top_module (
     input clk,
     input sw0,
     input sw1,
+    input sw2,
     output [7:0] Jx,
     output reg [0:3] an = 4'b1111,
     output reg [0:6] seg = 7'b1111111
@@ -461,14 +462,4 @@ module top_module (
             end
         end
     end
-    
-
-    /*insertion_sort insertion_sort_inst (
-        .clk(clk),
-        .sw0(sw0),
-        .sw1(sw1),
-        .btnR(btnR),
-        .Jx(Jx)
-    );*/
-
-endmodule
+endmodule 
