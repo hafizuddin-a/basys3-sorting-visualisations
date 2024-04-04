@@ -12,6 +12,7 @@ module top_module (
     
     input clk,
     output [7:0] Jx,
+    output [7:0] JXADC,
     output reg [0:3] an = 4'b1111,
     output reg [0:6] seg = 7'b1111111
 );
