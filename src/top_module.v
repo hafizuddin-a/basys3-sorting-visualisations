@@ -49,20 +49,20 @@ module top_module (
     );
     
     Oled_Display unit_oled2 (
-    .clk(clk_6p25m), 
-    .reset(0), 
-    .frame_begin(frame_begin2), 
-    .sending_pixels(sending_pixels2),
-    .sample_pixel(sample_pixel2), 
-    .pixel_index(pixel_index2), 
-    .pixel_data(oled_data2), 
-    .cs(JXADC[0]), 
-    .sdin(JXADC[1]), 
-    .sclk(JXADC[3]), 
-    .d_cn(JXADC[4]), 
-    .resn(JXADC[5]), 
-    .vccen(JXADC[6]), 
-    .pmoden(JXADC[7])
+        .clk(clk_6p25m), 
+        .reset(0), 
+        .frame_begin(frame_begin2), 
+        .sending_pixels(sending_pixels2),
+        .sample_pixel(sample_pixel2), 
+        .pixel_index(pixel_index2), 
+        .pixel_data(oled_data2), 
+        .cs(JXADC[0]), 
+        .sdin(JXADC[1]), 
+        .sclk(JXADC[3]), 
+        .d_cn(JXADC[4]), 
+        .resn(JXADC[5]), 
+        .vccen(JXADC[6]), 
+        .pmoden(JXADC[7])
     );
      
     // Parameters for bar display
@@ -90,7 +90,6 @@ module top_module (
     debouncer centre_debouncer(clk, btnC, btnC_debouncer);
     reg is_begin_manual_input = 0;
     reg is_manual_black = 0;
-    reg [6:0] led_checkpoints = 0;
 
     always @ (posedge clk) begin 
         sorting_algorithm = btnU ? 4'b0001 : 
@@ -121,22 +120,21 @@ module top_module (
                     seg = 7'b1100000;
                 end
             endcase
-            led[13:7] = led_checkpoints;
             if (sw[15]) begin // breakpoint check: led[8]
+                bar_heights[0] = 0;
                 bar_heights[1] = 0;
                 bar_heights[2] = 0;
                 bar_heights[3] = 0;
                 bar_heights[4] = 0;
                 is_begin_manual_input = 0;
                 sorting = 0;
-                led_checkpoints <= 7'b0_000_010;
-                led_checkpoints = 0;
                 is_finished_manual_input = 0;
                 sorted <= 0;
+                curr_index_manual = 0;
+                led <= 0;
             end else if (!is_begin_manual_input && btnC_debouncer && !sorting) begin // breakpoint check: led[9]
                 is_begin_manual_input = 1;
                 is_manual_black = 0;
-                led_checkpoints <=  7'b0_000_100;
             end else if (!sw[0] && !is_finished_manual_input && is_begin_manual_input) begin // manual input mode 
                 sorting <= 0;
                 delay_counter <= 0;
@@ -144,13 +142,11 @@ module top_module (
                 random_bars_generated <= 0; // Reset the flag
                 sorted <= 0; // Reset the sorted flag
                 if (!btnC && curr_index_manual < 5) begin // checkpoint led[10]
-                    led_checkpoints <=  7'b0_001_000;
                     curr_digit_manual = sw[9] ? 9 : sw[8] ? 8 : sw[7] ? 7 : sw[6] ? 6 : sw[5] ? 5 :
-                                        sw[4] ? 4 : sw[3] ? 3 : sw[2] ? 2 : sw[1] ? 1 : 0;
+                                        sw[4] ? 4 : sw[3] ? 3 : sw[2] ? 2 : sw[1] ? 1 : 1;
                     bar_heights[curr_index_manual] <= curr_digit_manual * 7;
                     led[curr_index_manual] <= 1;
                 end else if (btnC_debouncer) begin // checkpoint led[11]
-                    led_checkpoints <=  7'b0_010_000;
                     led[curr_index_manual] <= 1;
                     curr_index_manual <= curr_index_manual + 1;
                     if (curr_index_manual == 5) 
@@ -174,7 +170,6 @@ module top_module (
                 i <= 0; // Initialize indices for bubble sort
                 j <= 0;
                 // checkpoint led[12]
-                led_checkpoints <= 7'b0_100_000;
             end else if (sorting) begin
                 if (delay_counter < SORT_DELAY) begin
                     delay_counter <= delay_counter + 1; // Increment delay counter
@@ -191,7 +186,6 @@ module top_module (
                             i <= i + 1; // Move to the next pass of the bubble sort
                             j <= 0; // Reset the inner loop counter
                         end else begin // checkpoint led[13]
-                            led_checkpoints <= 7'b1_000_000;
                             sorting <= 0; // Sorting is complete
                             sorted <= 1; // Set the sorted flag
                             is_begin_manual_input <= 0;
