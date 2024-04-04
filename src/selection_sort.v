@@ -19,6 +19,15 @@ reg [1:0] count;
 integer i, j, min_idx;
 reg [3:0] temp;
 
+wire frame_begin, sending_pixels, sample_pixel;
+wire [12:0] pixel_index;
+reg [15:0] oled_data;
+
+Oled_Display runOled(clk, rst, frame_begin, sending_pixels,
+        sample_pixel, pixel_index, oled_data, Jx[0], Jx[1], Jx[3], Jx[4], Jx[5], Jx[6],
+        Jx[7]
+    );
+
 always @(posedge clk) begin
     if (rst) begin
         for (i = 0; i < 4; i = i + 1) begin

@@ -1,12 +1,12 @@
 `timescale 1ns / 1ps
 
-// bubble_sort module
+// cocktail_sort module
 // TODO: Use push buttons to control. btnC to stop/continue, btnR for next step, btnL for prev step
-module bubble_sort (
+module cocktail_sort (
     input clk,
     input sw0,
-    input sw1, // TODO: Rename switches
-    output [7:0] Jx
+    input btnL,
+    output [7:0] cocktail_sort_Jx
 );
 
 wire frame_begin, sending_pixels, sample_pixel;
@@ -24,13 +24,13 @@ Oled_Display unit_oled (
     .sample_pixel(sample_pixel), 
     .pixel_index(pixel_index), 
     .pixel_data(oled_data), 
-    .cs(Jx[0]), 
-    .sdin(Jx[1]), 
-    .sclk(Jx[3]), 
-    .d_cn(Jx[4]), 
-    .resn(Jx[5]), 
-    .vccen(Jx[6]), 
-    .pmoden(Jx[7])
+    .cs(cocktail_sort_Jx[0]), 
+    .sdin(cocktail_sort_Jx[1]), 
+    .sclk(cocktail_sort_Jx[3]), 
+    .d_cn(cocktail_sort_Jx[4]), 
+    .resn(cocktail_sort_Jx[5]), 
+    .vccen(cocktail_sort_Jx[6]), 
+    .pmoden(cocktail_sort_Jx[7])
 );
 
 // Parameters for bar display
@@ -45,6 +45,7 @@ reg [6:0] counter;
 reg [31:0] delay_counter; // Counter for sorting delay
 reg sorting; // Flag to indicate sorting is in progress
 reg sorted; // Flag to indicate sorting is complete
+reg dir; // Flag for direction of sorting
 integer i, j;
 reg random_bars_generated;
 
@@ -59,7 +60,7 @@ always @(posedge clk) begin
         j <= 0;
         random_bars_generated <= 0; // Reset the flag
         sorted <= 0; // Reset the sorted flag
-    end else if (sw0 && !sw1 && !random_bars_generated) begin
+    end else if (sw0 && !btnL && !random_bars_generated) begin
         // Generate random bars when sw0 is turned on and sw1 is off
         counter <= counter + 1; // Increment counter
         for (i = 0; i < 5; i = i + 1) begin
@@ -70,26 +71,43 @@ always @(posedge clk) begin
         j <= 0;
         random_bars_generated <= 1; // Set the flag
         sorted <= 0; // Reset the sorted flag
-    end else if (sw0 && sw1 && !sorting && !sorted) begin
+    end else if (sw0 && btnL && !sorting && !sorted) begin
         sorting <= 1; // Start sorting
         i <= 0; // Initialize indices for bubble sort
         j <= 0;
+        dir <= 0;
     end else if (sorting) begin
         if (delay_counter < SORT_DELAY) begin
             delay_counter <= delay_counter + 1; // Increment delay counter
         end else begin
             delay_counter <= 0; // Reset delay counter
-            if (j < 4 - i) begin
-                if (bar_heights[j] > bar_heights[j + 1]) begin
+                if (dir == 0 && j < 4 - i) begin
+                    if (bar_heights[j] > bar_heights[j + 1]) begin
+                        // Swap adjacent bars if they are in the wrong order
+                        {bar_heights[j], bar_heights[j + 1]} <= {bar_heights[j + 1], bar_heights[j]};
+                    end
+                    j <= j + 1; // Move to the next pair
+                end
+                else if (dir == 1 && j >= i - 1) begin 
+                     if (bar_heights[j] > bar_heights[j + 1]) begin
                     // Swap adjacent bars if they are in the wrong order
                     {bar_heights[j], bar_heights[j + 1]} <= {bar_heights[j + 1], bar_heights[j]};
                 end
-                j <= j + 1; // Move to the next pair
-            end else begin
+                j <= j - 1; // Move to the next pair
+                end 
+            else begin
                 if (i < 3) begin
-                    i <= i + 1; // Move to the next pass of the bubble sort
-                    j <= 0; // Reset the inner loop counter
-                end else begin
+                    //i <= i + 1; // Move to the next pass of the bubble sort
+                    if (dir == 0) begin
+                        j <= 3 - i; // Reset the inner loop counter //change here
+                        dir <= 1;
+                        i <= i + 1;
+                    end else begin
+                        j <= 0;
+                        dir <= 0;
+                    end
+                end 
+                else begin
                     sorting <= 0; // Sorting is complete
                     sorted <= 1; // Set the sorted flag
                 end
@@ -118,14 +136,20 @@ always @(*) begin
     
                 // If sorting is in progress, color bars accordingly
                 if (sorting) begin
+                //default sorting color = red
+                    oled_data = RED_COLOR;
                     // If the bar is currently being compared, color it yellow
                     if (bar_index == j || bar_index == j + 1) begin
                         oled_data = YELLOW_COLOR;
-                    end
-    
+                    end    
+     
                     // If the bar is in the sorted position, color it red
-                    if (bar_index >= 5 - i) begin
-                        oled_data = RED_COLOR;
+                    if (bar_index >= 5 - i || bar_index < i && i==1 && dir == 0
+                    || bar_index < i - 1 && i==2 && dir == 1
+                    || bar_index < i && i==2 && dir == 0
+                    || bar_index < i && i==3 && dir == 1
+                    ) begin
+                        oled_data = BAR_COLOR;
                     end
                 end
             end
