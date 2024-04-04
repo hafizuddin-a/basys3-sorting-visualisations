@@ -86,6 +86,7 @@ module top_module (
     .pmoden(JXADC[7])
     );
     
+    
     // Parameters for bar display
     localparam BAR_WIDTH = 8;
     localparam BAR_SPACING = 2;
