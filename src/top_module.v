@@ -1,55 +1,31 @@
 `timescale 1ns / 1ps
 
 // top_module module
-//module top_module (
-//    input clk,
-//    input sw0,
-//    input btnL,
-//    output [7:0] Jx,
-//    output [7:0] JXADC
-//);
-
-//cocktail_sort inst(
-//    .clk(clk),
-//    .sw0(sw0),
-//    .btnL(btnL),
-//    .Jx(Jx),
-//    .JXADC(JXADC)
-//);
-
-`timescale 1ns / 1ps
-
-// top_module module
 module top_module (
     input btnC,
     input btnU,
     input btnD, 
     input btnL, 
     input btnR,
-    input [0:9] sw,
-    output reg [8:0] led,
+    input [0:15] sw,
+    output reg [15:0] led = 0,
     
     input clk,
     output [7:0] Jx,
-    output [7:0] JXADC,
     output reg [0:3] an = 4'b1111,
     output reg [0:6] seg = 7'b1111111
 );
 
     wire frame_begin, sending_pixels, sample_pixel;
-    wire frame_begin2, sending_pixels2, sample_pixel2;    
     wire [12:0] pixel_index;
-    wire [12:0] pixel_index2;
     reg [15:0] oled_data;
-    reg [15:0] oled_data2;
     wire clk_6p25m;
-    
 
     // 7 seg display 
     reg [16:0] seven_seg_counter = 0;
     reg [1:0] anode_index = 0;
     reg [3:0] sorting_algorithm = 0; // 0001 = bubble; 0010 = selection; 0100 = insertion; 1000 = qucick
-    
+
     clk6p25m clock_display(clk, clk_6p25m);
     
     Oled_Display unit_oled (
@@ -69,23 +45,6 @@ module top_module (
         .pmoden(Jx[7])
     );
     
-    Oled_Display unit_oled2 (
-    .clk(clk_6p25m), 
-    .reset(0), 
-    .frame_begin(frame_begin2), 
-    .sending_pixels(sending_pixels2),
-    .sample_pixel(sample_pixel2), 
-    .pixel_index(pixel_index2), 
-    .pixel_data(oled_data2), 
-    .cs(JXADC[0]), 
-    .sdin(JXADC[1]), 
-    .sclk(JXADC[3]), 
-    .d_cn(JXADC[4]), 
-    .resn(JXADC[5]), 
-    .vccen(JXADC[6]), 
-    .pmoden(JXADC[7])
-    );
-    
     // Parameters for bar display
     localparam BAR_WIDTH = 8;
     localparam BAR_SPACING = 2;
@@ -97,10 +56,10 @@ module top_module (
     reg [6:0] bar_heights [4:0];
     reg [6:0] counter;
     reg [31:0] delay_counter; // Counter for sorting delay
-    reg sorting; // Flag to indicate sorting is in progress
+    reg sorting = 0; // Flag to indicate sorting is in progress
     reg [4:0] is_bar_sorted = 5'b00000; // if true, green; yellow otherwise
     reg sorted; // Flag to indicate sorting is complete
-    integer i, j, min_index;
+    integer i, j, k, min_index;
     reg dir; // Flag for direction of sorting
     reg random_bars_generated;
     reg [3:0] curr_digit_manual; // digit to manually input from 1 - 9
@@ -109,6 +68,9 @@ module top_module (
     wire btnC_debouncer;
     reg is_finished_manual_input = 0;
     debouncer centre_debouncer(clk, btnC, btnC_debouncer);
+    reg is_begin_manual_input = 0;
+    reg is_manual_black = 0;
+    reg [6:0] led_checkpoints = 0;
 
     always @ (posedge clk) begin 
         sorting_algorithm = btnU ? 4'b0001 : 
@@ -139,38 +101,60 @@ module top_module (
                     seg = 7'b1100000;
                 end
             endcase
-            if (!sw[0] && !is_finished_manual_input) begin // manual input mode 
+            led[13:7] = led_checkpoints;
+            if (sw[15]) begin // breakpoint check: led[8]
+                bar_heights[1] = 0;
+                bar_heights[2] = 0;
+                bar_heights[3] = 0;
+                bar_heights[4] = 0;
+                is_begin_manual_input = 0;
+                sorting = 0;
+                led_checkpoints <= 7'b0_000_010;
+                led_checkpoints = 0;
+                is_finished_manual_input = 0;
+                sorted <= 0;
+            end else if (!is_begin_manual_input && btnC_debouncer && !sorting) begin // breakpoint check: led[9]
+                is_begin_manual_input = 1;
+                is_manual_black = 0;
+                led_checkpoints <=  7'b0_000_100;
+            end else if (!sw[0] && !is_finished_manual_input && is_begin_manual_input) begin // manual input mode 
                 sorting <= 0;
                 delay_counter <= 0;
                 j <= 0;
                 random_bars_generated <= 0; // Reset the flag
                 sorted <= 0; // Reset the sorted flag
-                if (!btnC && curr_index_manual < 5) begin 
-                    curr_digit_manual = sw[1] ? 1 : sw[2] ? 2 : sw[3] ? 3 : sw[4] ? 4 : sw[5] ? 5 :
-                                        sw[6] ? 6 : sw[7] ? 7 : sw[8] ? 8 : sw[9] ? 9 : 0;
+                if (!btnC && curr_index_manual < 5) begin // checkpoint led[10]
+                    led_checkpoints <=  7'b0_001_000;
+                    curr_digit_manual = sw[9] ? 9 : sw[8] ? 8 : sw[7] ? 7 : sw[6] ? 6 : sw[5] ? 5 :
+                                        sw[4] ? 4 : sw[3] ? 3 : sw[2] ? 2 : sw[1] ? 1 : 0;
                     bar_heights[curr_index_manual] <= curr_digit_manual * 7;
                     led[curr_index_manual] <= 1;
-                end else if (btnC_debouncer) begin
+                end else if (btnC_debouncer) begin // checkpoint led[11]
+                    led_checkpoints <=  7'b0_010_000;
                     led[curr_index_manual] <= 1;
                     curr_index_manual <= curr_index_manual + 1;
                     if (curr_index_manual == 5) 
                         is_finished_manual_input <= 1;
+                        is_begin_manual_input <= 0;
                 end
             end else if (sw[0] && !btnU && !random_bars_generated) begin // random input mode
                 counter <= counter + 1; // Increment counter
                 is_finished_manual_input = 0;
                 for (i = 0; i < 5; i = i + 1) begin
-                    bar_heights[i] <= (counter * 37 + i * 17) % 63 + 1; // Generate more random heights
+                    bar_heights[i] <= (counter * 37 + i * 17) % 64; // Generate more random heights
                 end
                 sorting <= 0; // Ensure sorting is not started yet
                 delay_counter <= 0;
                 j <= 0;
                 random_bars_generated <= 1; // Set the flag
                 sorted <= 0; // Reset the sorted flag
+                
             end else if (btnU && !sorting && !sorted && (is_finished_manual_input || random_bars_generated)) begin
                 sorting <= 1; // Start sorting
                 i <= 0; // Initialize indices for bubble sort
                 j <= 0;
+                // checkpoint led[12]
+                led_checkpoints <= 7'b0_100_000;
             end else if (sorting) begin
                 if (delay_counter < SORT_DELAY) begin
                     delay_counter <= delay_counter + 1; // Increment delay counter
@@ -186,10 +170,12 @@ module top_module (
                         if (i < 3) begin
                             i <= i + 1; // Move to the next pass of the bubble sort
                             j <= 0; // Reset the inner loop counter
-                        end else begin
+                        end else begin // checkpoint led[13]
+                            led_checkpoints <= 7'b1_000_000;
                             sorting <= 0; // Sorting is complete
                             sorted <= 1; // Set the sorted flag
-                            is_finished_manual_input <= 0;
+                            is_begin_manual_input <= 0;
+                            is_manual_black = 1; // reset manual input bars to black
                         end
                     end
                 end
@@ -235,7 +221,7 @@ module top_module (
                 counter <= counter + 1; // Increment counter
                 is_finished_manual_input = 0;
                 for (i = 0; i < 5; i = i + 1) begin
-                    bar_heights[i] <= (counter * 37 + i * 17) % 63 + 1; // Generate more random heights
+                    bar_heights[i] <= (counter * 37 + i * 17) % 64; // Generate more random heights
                 end
                 sorting <= 0; // Ensure sorting is not started yet
                 delay_counter <= 0;
@@ -318,7 +304,7 @@ module top_module (
                 counter <= counter + 1; // Increment counter
                 is_finished_manual_input = 0;
                 for (i = 0; i < 5; i = i + 1) begin
-                    bar_heights[i] <= (counter * 37 + i * 17) % 63 + 1; // Generate more random heights
+                    bar_heights[i] <= (counter * 37 + i * 17) % 64; // Generate more random heights
                 end
                 sorting <= 0; // Ensure sorting is not started yet
                 delay_counter <= 0;
@@ -397,7 +383,7 @@ module top_module (
                 counter <= counter + 1; // Increment counter
                 is_finished_manual_input = 0;
                 for (i = 0; i < 5; i = i + 1) begin
-                    bar_heights[i] <= (counter * 37 + i * 17) % 63 + 1; // Generate more random heights
+                    bar_heights[i] <= (counter * 37 + i * 17) % 64; // Generate more random heights
                 end
                 sorting <= 0; // Ensure sorting is not started yet
                 delay_counter <= 0;
@@ -465,10 +451,8 @@ module top_module (
                     if ((63 - (pixel_index / 96)) < bar_heights[((pixel_index % 96) / (BAR_WIDTH + BAR_SPACING)) / 2]) begin
                         if ((((pixel_index % 96) / (BAR_WIDTH + BAR_SPACING)) / 2) == j - 1 && sorting) begin // If this is the selected bar, make it yellow
                             oled_data = YELLOW_COLOR;
-                        end else if (((pixel_index % 96) / (BAR_WIDTH + BAR_SPACING)) / 2 < i) begin
-                            oled_data = BAR_COLOR;
                         end else begin
-                            oled_data = RED_COLOR;
+                            oled_data = BAR_COLOR;
                         end
                     end else begin
                         oled_data = BACKGROUND_COLOR;
@@ -493,27 +477,27 @@ module top_module (
                             oled_data = BAR_COLOR;
                             // If sorting is in progress, color bars accordingly
                             if (sorting) begin
-                                oled_data = RED_COLOR;
                                 // If the bar is currently being compared, color it yellow
                                 if (bar_index == j || bar_index == j + 1) begin
                                     oled_data = YELLOW_COLOR;
                                 end
                                 // If the bar is in the sorted position, color it red
                                 if (bar_index >= 5 - i) begin
-                                    oled_data = BAR_COLOR;
+                                    oled_data = RED_COLOR;
                                 end
                             end
                         end
                         else if (sorting_algorithm == 4'b0100) begin //insertion sort
                             // Default bar color
-                            oled_data = BAR_COLOR;
+                            oled_data = RED_COLOR;
                             // If sorting is in progress, color bars accordingly
                             if (sorting) begin
-                                oled_data = RED_COLOR; 
-                                if (bar_index < i)
-                                    oled_data = BAR_COLOR;   
+                                if (is_bar_sorted[bar_index])
+                                    oled_data = BAR_COLOR;
+                                else
+                                    oled_data = RED_COLOR;
                                 if (bar_index == j || bar_index == j - 1)
-                                    oled_data = YELLOW_COLOR;                             
+                                    oled_data = YELLOW_COLOR;
                             end else if (sorted) begin
                                 oled_data <= BAR_COLOR;
                             end
