@@ -45,6 +45,24 @@ module top_module (
         .pmoden(Jx[7])
     );
     
+    Oled_Display unit_oled2 (
+    .clk(clk_6p25m), 
+    .reset(0), 
+    .frame_begin(frame_begin2), 
+    .sending_pixels(sending_pixels2),
+    .sample_pixel(sample_pixel2), 
+    .pixel_index(pixel_index2), 
+    .pixel_data(oled_data2), 
+    .cs(JXADC[0]), 
+    .sdin(JXADC[1]), 
+    .sclk(JXADC[3]), 
+    .d_cn(JXADC[4]), 
+    .resn(JXADC[5]), 
+    .vccen(JXADC[6]), 
+    .pmoden(JXADC[7])
+    );
+    
+    
     // Parameters for bar display
     localparam BAR_WIDTH = 8;
     localparam BAR_SPACING = 2;
