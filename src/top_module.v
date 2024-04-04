@@ -120,7 +120,7 @@ module top_module (
                 counter <= counter + 1; // Increment counter
                 is_finished_manual_input = 0;
                 for (i = 0; i < 5; i = i + 1) begin
-                    bar_heights[i] <= (counter * 37 + i * 17) % 64; // Generate more random heights
+                    bar_heights[i] <= (counter * 37 + i * 17) % 63 + 1; // Generate more random heights
                 end
                 sorting <= 0; // Ensure sorting is not started yet
                 delay_counter <= 0;
@@ -195,7 +195,7 @@ module top_module (
                 counter <= counter + 1; // Increment counter
                 is_finished_manual_input = 0;
                 for (i = 0; i < 5; i = i + 1) begin
-                    bar_heights[i] <= (counter * 37 + i * 17) % 64; // Generate more random heights
+                    bar_heights[i] <= (counter * 37 + i * 17) % 63 + 1; // Generate more random heights
                 end
                 sorting <= 0; // Ensure sorting is not started yet
                 delay_counter <= 0;
@@ -278,7 +278,7 @@ module top_module (
                 counter <= counter + 1; // Increment counter
                 is_finished_manual_input = 0;
                 for (i = 0; i < 5; i = i + 1) begin
-                    bar_heights[i] <= (counter * 37 + i * 17) % 64; // Generate more random heights
+                    bar_heights[i] <= (counter * 37 + i * 17) % 63 + 1; // Generate more random heights
                 end
                 sorting <= 0; // Ensure sorting is not started yet
                 delay_counter <= 0;
@@ -357,7 +357,7 @@ module top_module (
                 counter <= counter + 1; // Increment counter
                 is_finished_manual_input = 0;
                 for (i = 0; i < 5; i = i + 1) begin
-                    bar_heights[i] <= (counter * 37 + i * 17) % 64; // Generate more random heights
+                    bar_heights[i] <= (counter * 37 + i * 17) % 63 + 1; // Generate more random heights
                 end
                 sorting <= 0; // Ensure sorting is not started yet
                 delay_counter <= 0;
