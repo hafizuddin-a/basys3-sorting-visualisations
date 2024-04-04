@@ -226,8 +226,8 @@ module top_module (
                 random_bars_generated <= 0; // Reset the flag
                 sorted <= 0; // Reset the sorted flag
                 if (!btnC && curr_index_manual < 5) begin 
-                    curr_digit_manual = sw[1] ? 1 : sw[2] ? 2 : sw[3] ? 3 : sw[4] ? 4 : sw[5] ? 5 :
-                                        sw[6] ? 6 : sw[7] ? 7 : sw[8] ? 8 : sw[9] ? 9 : 0;
+                    curr_digit_manual = sw[9] ? 9 : sw[8] ? 8 : sw[7] ? 7 : sw[6] ? 6 : sw[5] ? 5 :
+                                    sw[4] ? 4 : sw[3] ? 3 : sw[2] ? 2 : sw[1] ? 1 : 0;
                     bar_heights[curr_index_manual] <= curr_digit_manual * 7;
                     led[curr_index_manual] <= 1;
                 end else if (btnC_debouncer) begin
@@ -309,8 +309,8 @@ module top_module (
                 sorted <= 0; // Reset the sorted flag
                 is_bar_sorted <= 0;
                 if (!btnC && curr_index_manual < 5) begin 
-                    curr_digit_manual = sw[1] ? 1 : sw[2] ? 2 : sw[3] ? 3 : sw[4] ? 4 : sw[5] ? 5 :
-                                        sw[6] ? 6 : sw[7] ? 7 : sw[8] ? 8 : sw[9] ? 9 : 0;
+                    curr_digit_manual = sw[9] ? 9 : sw[8] ? 8 : sw[7] ? 7 : sw[6] ? 6 : sw[5] ? 5 :
+                                    sw[4] ? 4 : sw[3] ? 3 : sw[2] ? 2 : sw[1] ? 1 : 0;
                     bar_heights[curr_index_manual] <= curr_digit_manual * 7;
                     led[curr_index_manual] <= 1;
                 end else if (btnC_debouncer) begin
@@ -388,8 +388,8 @@ module top_module (
                 random_bars_generated <= 0; // Reset the flag
                 sorted <= 0; // Reset the sorted flag
                 if (!btnC && curr_index_manual < 5) begin 
-                    curr_digit_manual = sw[1] ? 1 : sw[2] ? 2 : sw[3] ? 3 : sw[4] ? 4 : sw[5] ? 5 :
-                                        sw[6] ? 6 : sw[7] ? 7 : sw[8] ? 8 : sw[9] ? 9 : 0;
+                    curr_digit_manual = sw[9] ? 9 : sw[8] ? 8 : sw[7] ? 7 : sw[6] ? 6 : sw[5] ? 5 :
+                                    sw[4] ? 4 : sw[3] ? 3 : sw[2] ? 2 : sw[1] ? 1 : 0;
                     bar_heights[curr_index_manual] <= curr_digit_manual * 7;
                     led[curr_index_manual] <= 1;
                 end else if (btnC_debouncer) begin
