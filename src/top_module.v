@@ -29,14 +29,6 @@ module top_module (
     input [0:9] sw,
     output reg [8:0] led,
     
-    input btnC,
-    input btnU,
-    input btnD, 
-    input btnL, 
-    input btnR,
-    input [0:9] sw,
-    output reg [8:0] led,
-    
     input clk,
     output [7:0] Jx,
     output [7:0] JXADC,
