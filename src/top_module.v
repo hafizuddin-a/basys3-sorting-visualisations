@@ -6,8 +6,8 @@ module top_module (
     input btnD, 
     input btnL, 
     input btnR,
-    input [0:9] sw,
-    output reg [8:0] led,
+    input [0:15] sw,
+    output reg [15:0] led = 0,
     
     input clk,
     output [7:0] Jx,
@@ -76,10 +76,10 @@ module top_module (
     reg [6:0] bar_heights [4:0];
     reg [6:0] counter;
     reg [31:0] delay_counter; // Counter for sorting delay
-    reg sorting; // Flag to indicate sorting is in progress
+    reg sorting = 0; // Flag to indicate sorting is in progress
     reg [4:0] is_bar_sorted = 5'b00000; // if true, green; yellow otherwise
     reg sorted; // Flag to indicate sorting is complete
-    integer i, j, min_index;
+    integer i, j, k, min_index;
     reg dir; // Flag for direction of sorting
     reg random_bars_generated;
     reg [3:0] curr_digit_manual; // digit to manually input from 1 - 9
@@ -88,6 +88,9 @@ module top_module (
     wire btnC_debouncer;
     reg is_finished_manual_input = 0;
     debouncer centre_debouncer(clk, btnC, btnC_debouncer);
+    reg is_begin_manual_input = 0;
+    reg is_manual_black = 0;
+    reg [6:0] led_checkpoints = 0;
 
     always @ (posedge clk) begin 
         sorting_algorithm = btnU ? 4'b0001 : 
@@ -118,22 +121,41 @@ module top_module (
                     seg = 7'b1100000;
                 end
             endcase
-            if (!sw[0] && !is_finished_manual_input) begin // manual input mode 
+            led[13:7] = led_checkpoints;
+            if (sw[15]) begin // breakpoint check: led[8]
+                bar_heights[1] = 0;
+                bar_heights[2] = 0;
+                bar_heights[3] = 0;
+                bar_heights[4] = 0;
+                is_begin_manual_input = 0;
+                sorting = 0;
+                led_checkpoints <= 7'b0_000_010;
+                led_checkpoints = 0;
+                is_finished_manual_input = 0;
+                sorted <= 0;
+            end else if (!is_begin_manual_input && btnC_debouncer && !sorting) begin // breakpoint check: led[9]
+                is_begin_manual_input = 1;
+                is_manual_black = 0;
+                led_checkpoints <=  7'b0_000_100;
+            end else if (!sw[0] && !is_finished_manual_input && is_begin_manual_input) begin // manual input mode 
                 sorting <= 0;
                 delay_counter <= 0;
                 j <= 0;
                 random_bars_generated <= 0; // Reset the flag
                 sorted <= 0; // Reset the sorted flag
-                if (!btnC && curr_index_manual < 5) begin 
-                    curr_digit_manual = sw[1] ? 1 : sw[2] ? 2 : sw[3] ? 3 : sw[4] ? 4 : sw[5] ? 5 :
-                                        sw[6] ? 6 : sw[7] ? 7 : sw[8] ? 8 : sw[9] ? 9 : 0;
+                if (!btnC && curr_index_manual < 5) begin // checkpoint led[10]
+                    led_checkpoints <=  7'b0_001_000;
+                    curr_digit_manual = sw[9] ? 9 : sw[8] ? 8 : sw[7] ? 7 : sw[6] ? 6 : sw[5] ? 5 :
+                                        sw[4] ? 4 : sw[3] ? 3 : sw[2] ? 2 : sw[1] ? 1 : 0;
                     bar_heights[curr_index_manual] <= curr_digit_manual * 7;
                     led[curr_index_manual] <= 1;
-                end else if (btnC_debouncer) begin
+                end else if (btnC_debouncer) begin // checkpoint led[11]
+                    led_checkpoints <=  7'b0_010_000;
                     led[curr_index_manual] <= 1;
                     curr_index_manual <= curr_index_manual + 1;
                     if (curr_index_manual == 5) 
                         is_finished_manual_input <= 1;
+                        is_begin_manual_input <= 0;
                 end
             end else if (sw[0] && !btnU && !random_bars_generated) begin // random input mode
                 counter <= counter + 1; // Increment counter
@@ -146,10 +168,13 @@ module top_module (
                 j <= 0;
                 random_bars_generated <= 1; // Set the flag
                 sorted <= 0; // Reset the sorted flag
+                
             end else if (btnU && !sorting && !sorted && (is_finished_manual_input || random_bars_generated)) begin
                 sorting <= 1; // Start sorting
                 i <= 0; // Initialize indices for bubble sort
                 j <= 0;
+                // checkpoint led[12]
+                led_checkpoints <= 7'b0_100_000;
             end else if (sorting) begin
                 if (delay_counter < SORT_DELAY) begin
                     delay_counter <= delay_counter + 1; // Increment delay counter
@@ -165,10 +190,12 @@ module top_module (
                         if (i < 3) begin
                             i <= i + 1; // Move to the next pass of the bubble sort
                             j <= 0; // Reset the inner loop counter
-                        end else begin
+                        end else begin // checkpoint led[13]
+                            led_checkpoints <= 7'b1_000_000;
                             sorting <= 0; // Sorting is complete
                             sorted <= 1; // Set the sorted flag
-                            is_finished_manual_input <= 0;
+                            is_begin_manual_input <= 0;
+                            is_manual_black = 1; // reset manual input bars to black
                         end
                     end
                 end
@@ -200,8 +227,8 @@ module top_module (
                 random_bars_generated <= 0; // Reset the flag
                 sorted <= 0; // Reset the sorted flag
                 if (!btnC && curr_index_manual < 5) begin 
-                    curr_digit_manual = sw[1] ? 1 : sw[2] ? 2 : sw[3] ? 3 : sw[4] ? 4 : sw[5] ? 5 :
-                                        sw[6] ? 6 : sw[7] ? 7 : sw[8] ? 8 : sw[9] ? 9 : 0;
+                    curr_digit_manual = sw[9] ? 9 : sw[8] ? 8 : sw[7] ? 7 : sw[6] ? 6 : sw[5] ? 5 :
+                                        sw[4] ? 4 : sw[3] ? 3 : sw[2] ? 2 : sw[1] ? 1 : 0;
                     bar_heights[curr_index_manual] <= curr_digit_manual * 7;
                     led[curr_index_manual] <= 1;
                 end else if (btnC_debouncer) begin
@@ -283,8 +310,8 @@ module top_module (
                 sorted <= 0; // Reset the sorted flag
                 is_bar_sorted <= 0;
                 if (!btnC && curr_index_manual < 5) begin 
-                    curr_digit_manual = sw[1] ? 1 : sw[2] ? 2 : sw[3] ? 3 : sw[4] ? 4 : sw[5] ? 5 :
-                                        sw[6] ? 6 : sw[7] ? 7 : sw[8] ? 8 : sw[9] ? 9 : 0;
+                    curr_digit_manual = sw[9] ? 9 : sw[8] ? 8 : sw[7] ? 7 : sw[6] ? 6 : sw[5] ? 5 :
+                                        sw[4] ? 4 : sw[3] ? 3 : sw[2] ? 2 : sw[1] ? 1 : 0;
                     bar_heights[curr_index_manual] <= curr_digit_manual * 7;
                     led[curr_index_manual] <= 1;
                 end else if (btnC_debouncer) begin
@@ -362,8 +389,8 @@ module top_module (
                 random_bars_generated <= 0; // Reset the flag
                 sorted <= 0; // Reset the sorted flag
                 if (!btnC && curr_index_manual < 5) begin 
-                    curr_digit_manual = sw[1] ? 1 : sw[2] ? 2 : sw[3] ? 3 : sw[4] ? 4 : sw[5] ? 5 :
-                                        sw[6] ? 6 : sw[7] ? 7 : sw[8] ? 8 : sw[9] ? 9 : 0;
+                    curr_digit_manual = sw[9] ? 9 : sw[8] ? 8 : sw[7] ? 7 : sw[6] ? 6 : sw[5] ? 5 :
+                                        sw[4] ? 4 : sw[3] ? 3 : sw[2] ? 2 : sw[1] ? 1 : 0;
                     bar_heights[curr_index_manual] <= curr_digit_manual * 7;
                     led[curr_index_manual] <= 1;
                 end else if (btnC_debouncer) begin
