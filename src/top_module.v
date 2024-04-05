@@ -92,6 +92,10 @@ module top_module (
     reg [23:0] looping_counter = 0;
     reg [4:0] looping_leds = 1;
     reg [3:0] looping_7_seg = 0;
+    integer movement = 0;
+    reg swap;
+    integer swap_from = 10;
+    integer swap_to = 10;
 
     always @ (posedge clk) begin 
         sorting_algorithm = btnU ? 4'b0001 : 
@@ -244,6 +248,11 @@ module top_module (
                         if (bar_heights[j] > bar_heights[j + 1]) begin
                             // Swap adjacent bars if they are in the wrong order
                             {bar_heights[j], bar_heights[j + 1]} <= {bar_heights[j + 1], bar_heights[j]};
+                            swap_from <= j;
+                            swap_to <= j + 1;
+                        end else begin
+                            swap_from <= 10;
+                            swap_to <= 10; 
                         end
                         j <= j + 1; // Move to the next pair
                     end else begin
@@ -543,10 +552,28 @@ module top_module (
     //additional color definitions
     localparam YELLOW_COLOR = 16'hFFE0; // Yellow color
     localparam RED_COLOR = 16'hF800; // Red color
+    localparam WHITE_COLOR = 16'hFFFF; // Red color
     integer bar_index;
+    reg [30:0] m_counter;
+    reg [6:0] horizontal;
+    reg[6:0] vertical;
+
+    always @(posedge clk) begin
+        
+        m_counter <= m_counter + 1;
+        if (m_counter == 20_000_000) begin
+            if (movement < 20) begin
+                movement <= movement + 1;
+            end
+            m_counter <= 0;
+        end
+    end
     
     // Add more logic in the display block to change colors
     always @(*) begin
+        horizontal = pixel_index % 96;
+        vertical = pixel_index / 96;
+
         if (sorting_algorithm == 4'b0010) begin // selection sorting
             if ((pixel_index % 96) < (BAR_WIDTH * 10 + BAR_SPACING * 9)) begin
                 // Inside the bar area
@@ -591,6 +618,9 @@ module top_module (
                                 if (bar_index >= 5 - i) begin
                                     oled_data = BAR_COLOR;
                                 end
+                                if (bar_index == swap_from || bar_index == swap_to) begin
+                                    oled_data = BACKGROUND_COLOR;
+                                end
                             end
                         end
                         else if (sorting_algorithm == 4'b0100) begin //insertion sort
@@ -633,6 +663,12 @@ module top_module (
                     end
                 end
             end
+        end
+        //swap
+        if (horizontal > 19 * swap_from + movement && 
+        horizontal < 19 * swap_from + movement + 10 &&
+        (63 - vertical) < bar_heights[bar_index]) begin
+           oled_data = WHITE_COLOR; 
         end
     end
 
