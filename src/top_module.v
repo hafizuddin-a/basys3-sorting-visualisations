@@ -89,7 +89,8 @@ module top_module (
     reg is_finished_manual_input = 0;
     debouncer centre_debouncer(clk, btnC, btnC_debouncer);
     reg is_begin_manual_input = 0;
-    reg is_manual_black = 0;
+    reg [23:0] looping_counter = 0;
+    reg [4:0] looping_leds = 1;
 
     always @ (posedge clk) begin 
         sorting_algorithm = btnU ? 4'b0001 : 
@@ -97,9 +98,13 @@ module top_module (
                             btnR ? 4'b0100 : 
                             btnL ? 4'b1000 : sorting_algorithm;
         seven_seg_counter <= seven_seg_counter + 1;
+        looping_counter <= looping_counter + 1;
         if (seven_seg_counter == 100_000) begin 
             seven_seg_counter <= 0;
             anode_index <= anode_index + 1;
+        end
+        if (looping_counter == 10_000_000) begin
+            looping_counter <= 0;
         end
         if (sorting_algorithm == 4'b0001) begin // bubble sorting
             case (anode_index) 
@@ -134,19 +139,19 @@ module top_module (
                 led <= 0;
             end else if (!is_begin_manual_input && btnC_debouncer && !sorting) begin // breakpoint check: led[9]
                 is_begin_manual_input = 1;
-                is_manual_black = 0;
             end else if (!sw[0] && !is_finished_manual_input && is_begin_manual_input) begin // manual input mode 
                 sorting <= 0;
                 delay_counter <= 0;
                 j <= 0;
                 random_bars_generated <= 0; // Reset the flag
                 sorted <= 0; // Reset the sorted flag
-                if (!btnC && curr_index_manual < 5) begin // checkpoint led[10]
+                if (!btnC && curr_index_manual < 5) begin 
                     curr_digit_manual = sw[9] ? 9 : sw[8] ? 8 : sw[7] ? 7 : sw[6] ? 6 : sw[5] ? 5 :
                                         sw[4] ? 4 : sw[3] ? 3 : sw[2] ? 2 : sw[1] ? 1 : 1;
                     bar_heights[curr_index_manual] <= curr_digit_manual * 7;
-                    led[curr_index_manual] <= 1;
-                end else if (btnC_debouncer) begin // checkpoint led[11]
+                    if (curr_index_manual < 5 ) 
+                        led[curr_index_manual] <= 1;
+                end else if (btnC_debouncer) begin 
                     led[curr_index_manual] <= 1;
                     curr_index_manual <= curr_index_manual + 1;
                     if (curr_index_manual == 5) 
@@ -170,6 +175,10 @@ module top_module (
                 i <= 0; // Initialize indices for bubble sort
                 j <= 0;
             end else if (sorting) begin
+                led[5:0] <= looping_leds;
+                if (looping_counter == 0) begin
+                    looping_leds <= {looping_leds[3:0], looping_leds[4]};
+                end
                 if (delay_counter < SORT_DELAY) begin
                     delay_counter <= delay_counter + 1; // Increment delay counter
                 end else begin
@@ -188,7 +197,6 @@ module top_module (
                             sorting <= 0; // Sorting is complete
                             sorted <= 1; // Set the sorted flag
                             is_begin_manual_input <= 0;
-                            is_manual_black = 1; // reset manual input bars to black
                             sorting_algorithm <= 4'b0011; // display dOnE
                         end
                     end
