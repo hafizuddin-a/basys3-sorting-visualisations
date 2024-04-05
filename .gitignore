@@ -93,3 +93,5 @@ my_project/
 *.log
 *.str
 *.str
+*.str
+vivado_pid40060.str
