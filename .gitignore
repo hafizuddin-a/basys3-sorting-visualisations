@@ -91,3 +91,4 @@ my_project/my_project.runs/synth_1/.Xil/top_module_propImpl.xdc
 my_project/
 *.jou
 *.log
+*.str
