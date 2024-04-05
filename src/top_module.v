@@ -370,6 +370,61 @@ module top_module (
                 j <= 0;
                 min_index <= i; // Set min_index to i for the first pass
             end else if (sorting && !sorted) begin
+                led[5:0] <= looping_leds;
+                if (looping_counter == 0) begin
+                    looping_leds <= {looping_leds[3:0], looping_leds[4]};
+                    looping_7_seg <= (looping_7_seg == 11) ? 0 : looping_7_seg + 1;
+                end
+                case (looping_7_seg)
+                    0: begin
+                        an = 4'b0111;
+                        seg = 7'b0111111;
+                    end
+                    1: begin
+                        an = 4'b0111;
+                        seg = 7'b1011111;
+                    end
+                    2: begin
+                        an = 4'b0111;
+                        seg = 7'b1101111;
+                    end
+                    3: begin
+                        an = 4'b0111;
+                        seg = 7'b1110111;
+                    end
+                    4: begin
+                        an = 4'b1011;
+                        seg = 7'b1110111;
+                    end
+                    5: begin
+                        an = 4'b1101;
+                        seg = 7'b1110111;
+                    end
+                    6: begin
+                        an = 4'b1110;
+                        seg = 7'b1110111;
+                    end
+                    7: begin
+                        an = 4'b1110;
+                        seg = 7'b1111011;
+                    end
+                    8: begin
+                        an = 4'b1110;
+                        seg = 7'b1111101;
+                    end
+                    9: begin
+                        an = 4'b1110;
+                        seg = 7'b0111111;
+                    end
+                    10: begin
+                        an = 4'b1101;
+                        seg = 7'b0111111;
+                    end
+                    11: begin
+                        an = 4'b1011;
+                        seg = 7'b0111111;
+                    end
+                endcase
                 if (delay_counter < SORT_DELAY) begin
                     delay_counter <= delay_counter + 1; // Increment delay counter
                 end else begin
