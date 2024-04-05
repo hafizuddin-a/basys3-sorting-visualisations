@@ -91,10 +91,11 @@ module top_module (
     reg is_begin_manual_input = 0;
     reg [23:0] looping_counter = 0;
     reg [4:0] looping_leds = 1;
+    reg [3:0] looping_7_seg = 0;
 
     always @ (posedge clk) begin 
         sorting_algorithm = btnU ? 4'b0001 : 
-                            btnD ? 4'b0010 :
+                            btnD ? 4'b0010 : 
                             btnR ? 4'b0100 : 
                             btnL ? 4'b1000 : sorting_algorithm;
         seven_seg_counter <= seven_seg_counter + 1;
@@ -137,7 +138,7 @@ module top_module (
                 sorted <= 0;
                 curr_index_manual = 0;
                 led <= 0;
-            end else if (!is_begin_manual_input && btnC_debouncer && !sorting) begin // breakpoint check: led[9]
+            end else if (!is_begin_manual_input && btnC_debouncer && !sorting) begin 
                 is_begin_manual_input = 1;
             end else if (!sw[0] && !is_finished_manual_input && is_begin_manual_input) begin // manual input mode 
                 sorting <= 0;
@@ -151,12 +152,16 @@ module top_module (
                     bar_heights[curr_index_manual] <= curr_digit_manual * 7;
                     if (curr_index_manual < 5 ) 
                         led[curr_index_manual] <= 1;
-                end else if (btnC_debouncer) begin 
-                    led[curr_index_manual] <= 1;
-                    curr_index_manual <= curr_index_manual + 1;
+                end else begin
                     if (curr_index_manual == 5) 
-                        is_finished_manual_input <= 1;
-                        is_begin_manual_input <= 0;
+                        curr_index_manual <= 0;
+                    if (btnC_debouncer) begin 
+                        led[curr_index_manual] <= 1;
+                        curr_index_manual <= curr_index_manual + 1;
+                        if (curr_index_manual == 5) 
+                            is_finished_manual_input <= 1;
+                            is_begin_manual_input <= 0;
+                    end
                 end
             end else if (sw[0] && !btnU && !random_bars_generated) begin // random input mode
                 counter <= counter + 1; // Increment counter
@@ -178,7 +183,58 @@ module top_module (
                 led[5:0] <= looping_leds;
                 if (looping_counter == 0) begin
                     looping_leds <= {looping_leds[3:0], looping_leds[4]};
+                    looping_7_seg <= (looping_7_seg == 11) ? 0 : looping_7_seg + 1;
                 end
+                case (looping_7_seg)
+                    0: begin
+                        an = 4'b0111;
+                        seg = 7'b0111111;
+                    end
+                    1: begin
+                        an = 4'b0111;
+                        seg = 7'b1011111;
+                    end
+                    2: begin
+                        an = 4'b0111;
+                        seg = 7'b1101111;
+                    end
+                    3: begin
+                        an = 4'b0111;
+                        seg = 7'b1110111;
+                    end
+                    4: begin
+                        an = 4'b1011;
+                        seg = 7'b1110111;
+                    end
+                    5: begin
+                        an = 4'b1101;
+                        seg = 7'b1110111;
+                    end
+                    6: begin
+                        an = 4'b1110;
+                        seg = 7'b1110111;
+                    end
+                    7: begin
+                        an = 4'b1110;
+                        seg = 7'b1111011;
+                    end
+                    8: begin
+                        an = 4'b1110;
+                        seg = 7'b1111101;
+                    end
+                    9: begin
+                        an = 4'b1110;
+                        seg = 7'b0111111;
+                    end
+                    10: begin
+                        an = 4'b1101;
+                        seg = 7'b0111111;
+                    end
+                    11: begin
+                        an = 4'b1011;
+                        seg = 7'b0111111;
+                    end
+                endcase
                 if (delay_counter < SORT_DELAY) begin
                     delay_counter <= delay_counter + 1; // Increment delay counter
                 end else begin
