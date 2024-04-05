@@ -107,6 +107,19 @@ module top_module (
         if (looping_counter == 10_000_000) begin
             looping_counter <= 0;
         end
+        if (sw[15]) begin
+            bar_heights[0] = 0;
+            bar_heights[1] = 0;
+            bar_heights[2] = 0;
+            bar_heights[3] = 0;
+            bar_heights[4] = 0;
+            is_begin_manual_input = 0;
+            sorting = 0;
+            is_finished_manual_input = 0;
+            sorted <= 0;
+            curr_index_manual = 0;
+            led <= 0;
+        end
         if (sorting_algorithm == 4'b0001) begin // bubble sorting
             case (anode_index) 
                 2'b00: begin 
@@ -126,19 +139,7 @@ module top_module (
                     seg = 7'b1100000;
                 end
             endcase
-            if (sw[15]) begin
-                bar_heights[0] = 0;
-                bar_heights[1] = 0;
-                bar_heights[2] = 0;
-                bar_heights[3] = 0;
-                bar_heights[4] = 0;
-                is_begin_manual_input = 0;
-                sorting = 0;
-                is_finished_manual_input = 0;
-                sorted <= 0;
-                curr_index_manual = 0;
-                led <= 0;
-            end else if (!is_begin_manual_input && btnC_debouncer && !sorting) begin 
+            if (!is_begin_manual_input && btnC_debouncer && !sorting) begin 
                 is_begin_manual_input = 1;
             end else if (!sw[0] && !is_finished_manual_input && is_begin_manual_input) begin // manual input mode 
                 sorting <= 0;
