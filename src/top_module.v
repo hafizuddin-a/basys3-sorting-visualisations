@@ -27,7 +27,7 @@ module top_module (
     // 7 seg display 
     reg [16:0] seven_seg_counter = 0;
     reg [1:0] anode_index = 0;
-    reg [3:0] sorting_algorithm = 0; // 0001 = bubble; 0010 = selection; 0100 = insertion; 1000 = qucick
+    reg [3:0] sorting_algorithm = 0; // 0001 = bubble; 0010 = selection; 0100 = insertion; 1000 = cocktail
     
     clk6p25m clock_display(clk, clk_6p25m);
     
@@ -120,7 +120,7 @@ module top_module (
                     seg = 7'b1100000;
                 end
             endcase
-            if (sw[15]) begin // breakpoint check: led[8]
+            if (sw[15]) begin
                 bar_heights[0] = 0;
                 bar_heights[1] = 0;
                 bar_heights[2] = 0;
@@ -169,7 +169,6 @@ module top_module (
                 sorting <= 1; // Start sorting
                 i <= 0; // Initialize indices for bubble sort
                 j <= 0;
-                // checkpoint led[12]
             end else if (sorting) begin
                 if (delay_counter < SORT_DELAY) begin
                     delay_counter <= delay_counter + 1; // Increment delay counter
@@ -185,11 +184,12 @@ module top_module (
                         if (i < 3) begin
                             i <= i + 1; // Move to the next pass of the bubble sort
                             j <= 0; // Reset the inner loop counter
-                        end else begin // checkpoint led[13]
+                        end else begin
                             sorting <= 0; // Sorting is complete
                             sorted <= 1; // Set the sorted flag
                             is_begin_manual_input <= 0;
                             is_manual_black = 1; // reset manual input bars to black
+                            sorting_algorithm <= 4'b0011; // display dOnE
                         end
                     end
                 end
@@ -273,6 +273,7 @@ module top_module (
                         sorting <= 0; // Sorting is complete
                         sorted <= 1; // Set sorted flag
                         is_finished_manual_input <= 0;
+                        sorting_algorithm <= 4'b0011; // display dOnE
                     end
                 end
             end
@@ -353,6 +354,7 @@ module top_module (
                         sorted <= 1;
                         sorting <= 0;
                         is_finished_manual_input <= 0;
+                        sorting_algorithm <= 4'b0011; // display dOnE
                     end
                 end
             end
@@ -444,11 +446,33 @@ module top_module (
                             sorting <= 0; // Sorting is complete
                             sorted <= 1; // Set the sorted flag
                             is_finished_manual_input <= 0;
+                            sorting_algorithm <= 4'b0011; // display dOnE
                         end
                     end
                 end
             end 
         end
+        else if (sorting_algorithm == 4'b0011) begin // done sorting
+            case (anode_index)
+                2'b00: begin
+                    an = 4'b0111;
+                    seg = 7'b0110000;
+                end 
+                2'b01: begin
+                    an = 4'b1011;
+                    seg = 7'b1101010;
+                end
+                2'b10: begin
+                    an = 4'b1101;
+                    seg = 7'b0000001;
+                end 
+                2'b11: begin
+                    an = 4'b1110;
+                    seg = 7'b1000010;
+                end
+            endcase
+            led[5:0] <= 0;
+        end 
     end
     
     //additional color definitions
@@ -483,7 +507,7 @@ module top_module (
         end else begin
             bar_index = ((pixel_index % 96) / (BAR_WIDTH + BAR_SPACING)) / 2; // Calculate the bar index
         
-            // Default color is black (background)
+            // Default color is black(background)
             oled_data = BACKGROUND_COLOR;
             
             if ((pixel_index % 96) < (BAR_WIDTH * 10 + BAR_SPACING * 9)) begin // Inside the bar area
@@ -526,7 +550,7 @@ module top_module (
                                 // If the bar is currently being compared, color it yellow
                                 if (bar_index == j || bar_index == j + 1) begin
                                     oled_data = YELLOW_COLOR;
-                                end    
+                                end
                 
                                 // If the bar is in the sorted position, color it red
                                 if (bar_index >= 5 - i || bar_index < i && i==1 && dir == 0
@@ -537,7 +561,10 @@ module top_module (
                                     oled_data = BAR_COLOR;
                                 end
                             end
-                        end 
+                        end else if (sorting_algorithm == 4'b0011) begin //done sorting
+                            if (sorted)
+                                oled_data <= BAR_COLOR;
+                        end
                     end
                 end
             end
