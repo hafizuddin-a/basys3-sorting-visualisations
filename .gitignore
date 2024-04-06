@@ -95,3 +95,4 @@ my_project/
 *.str
 *.str
 vivado_pid40060.str
+*.xpr.zip

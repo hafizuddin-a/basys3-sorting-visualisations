@@ -134,10 +134,10 @@ module top_module (
             bar_heights[4] = 0;
             random_bars_generated <= 0;
             is_begin_manual_input <= 0;
-            sorting = 0;
+            sorting <= 0;
             is_finished_manual_input <= 0;
             sorted <= 0;
-            curr_index_manual = 0;
+            curr_index_manual <= 0;
             led <= 0;
             sorting_algorithm <= 4'b0000;
         end
@@ -302,7 +302,9 @@ module top_module (
                     seg = 7'b0100100;
                 end
             endcase
-            if (!sw[0] && !is_finished_manual_input) begin // Manual input mode 
+            if (!is_begin_manual_input && btnC_debouncer && !sorting) begin 
+                is_begin_manual_input = 1;
+            end else if (!sw[0] && !is_finished_manual_input) begin // Manual input mode 
                 sorting <= 0;
                 delay_counter <= 0;
                 j <= 0;
@@ -441,7 +443,9 @@ module top_module (
                     seg = 7'b1001111;
                 end
             endcase
-            if (!sw[0] && !is_finished_manual_input) begin // Manual input mode 
+            if (!is_begin_manual_input && btnC_debouncer && !sorting) begin 
+                is_begin_manual_input = 1;
+            end else if (!sw[0] && !is_finished_manual_input) begin // Manual input mode 
                 sorting <= 0;
                 delay_counter <= 0;
                 j <= 0;
@@ -578,7 +582,9 @@ module top_module (
                     seg = 7'b0110001;
                 end
             endcase
-            if (!sw[0] && !is_finished_manual_input) begin // Manual input mode 
+            if (!is_begin_manual_input && btnC_debouncer && !sorting) begin 
+                is_begin_manual_input = 1;
+            end else if (!sw[0] && !is_finished_manual_input) begin // Manual input mode 
                 sorting <= 0;
                 delay_counter <= 0;
                 j <= 0;
