@@ -40,7 +40,6 @@ The Pmod OLED will display a graphical representation of the array being sorted.
 - Bubble Sort
 - Insertion Sort
 - Selection Sort
-- Quick Sort
-- Merge Sort
+- Cocktail Sort
 
 *Note: More algorithms may be added in future updates.*
